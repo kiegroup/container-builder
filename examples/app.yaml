@@ -1,0 +1,35 @@
+# example deployment that can be used to run the built image
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kogito-greetings
+  labels:
+    app: kogito-greetings
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kogito-greetings
+  template:
+    metadata:
+      labels:
+        app: kogito-greetings
+    spec:
+      containers:
+        - name: kogito-greetings
+          # taken from kaniko logs
+          image: 10.99.59.11/greetings:latest
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kogito-greetings
+spec:
+  selector:
+    app.kubernetes.io/name: kogito-greetings
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

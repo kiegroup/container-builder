@@ -1,0 +1,62 @@
+# Kogito Builder PoC
+
+This is a proof of concept for using [Kaniko](https://github.com/GoogleContainerTools/kaniko/blob/main/docs/tutorial.md) and [Camel-K Builder package](https://github.com/apache/camel-k/tree/main/pkg/builder) to build Kogito services in a Kubernetes clusters.
+
+## Requirements
+
+Since it's a PoC level code, it was made to work with Minikube only:
+
+- Install minikube locally
+- Enable the internal registry via `minikube addon enable registry`
+- Run with `go run main.go`
+
+The [`main.go`](main.go) file has a usage example.
+
+## History
+
+Since Camel-K already does a pretty good job building Camel applications in any Kubernetes environments and has a quite similar use case to Kogito, it makes sense looking at their tech.
+
+## How does it work?
+
+Without going into many details, Camel-K has basically two phases of their build, which I call "Project Assemble" and "Image Build". 
+In this first phase, Camel-K reads the Route configuration, assemble the Maven project and run the project build.
+Then it takes the Java application and build into an image.
+
+Camel-K has this concept of "Environment Platform" that based on the type of cluster which is running, can pick the right build feature.
+For example, source to image on OpenShift clusters or Kaniko on Kubernetes.
+
+Kogito might use this first phase to assemble a specific application based on the sources pushed to the cluster. 
+For example, Serverless Workflow projects can have a slightly different setup than DMN/Decisions one.
+
+For simplicity, I skipped the first phase and assembled the project on a "builder image" for Serverless Workflow projects.
+You can see a [draft for this image here](https://github.com/kiegroup/kogito-images/pull/1322).
+
+This base builder image does the project assembling "ahead of time", so there's no need to run this phase like Camel-K does.
+Kogito won't need this level of customization of a project, but there are use cases which could benefit from it such as using MongoDB as the persistence layer rather than Postgres.
+
+This PoC performs the Camel-K builder just partially, but using their interfaces and structures to have some sort of compatibility.
+Ideally, this project will evolve to a shared builder that can be reused by the tools from Camel-K and Kogito.
+
+The PoC is not a Kubernetes Operator, but rather a set of packages that could be embedded on an operator running in a cluster or a CLI running locally.
+
+The concept behind it is really simple. It abstracts the build and delegates internally based on the `PlatformBuild` information.
+The builder chosen by the environment will run and the final image pushed to the elected registry.
+
+This initial work supports Kaniko running on Minikube. Has potential to work on Kubernetes with an external registry such as Quay or Dockerhub.
+
+## The Next Steps
+
+Despite this code being a PoC, it can evolve to do more and abstract the build stage for a shareable use among both projects.
+There's a ton of `TODO` tags scattered in the code that needs work. 
+
+In a nutshell, a few EPICs:
+
+- Run tests on different environments to validate Kaniko on OpenShift, KIND, and Kubernetes.
+- Implement other build implementations such as [Spectrum](https://github.com/container-tools/spectrum), local Podman/Docker run, and [Source to Image](https://github.com/openshift/source-to-image).
+- Implement the first stage: "Project Assemble" instead of relying on a pre-built, pre-configured image.
+- Review the API interfaces and types to make sure that aligns with the build abstraction and can cover the majority of use cases.
+
+Keep in mind that the end goal is to use this package in any environment that can run a Go application, despite being a cluster or a local environment.
+
+As we evolve, evaluate the package with Camel-K team to make sure that it can fit their use case the same way it does today with their embedded package. 
+That might require some work to remove the relation of the integration concept from the build tasks.
