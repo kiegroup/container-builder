@@ -198,7 +198,7 @@ const (
 // ResourceVolume dictates where the build resources are mount
 type ResourceVolume struct {
 	// ReferenceName name of the object holding the resources reference
-	ReferenceName string
+	ReferenceName string `json:"referenceName"`
 	// ReferenceType type of the resource holding the reference
-	ReferenceType ResourceReferenceType
+	ReferenceType ResourceReferenceType `json:"referenceType"`
 }
