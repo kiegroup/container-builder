@@ -2,8 +2,10 @@ package builder
 
 import (
 	"context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ricardozanini/kogito-builder/api"
 	"github.com/ricardozanini/kogito-builder/util/test"
@@ -31,6 +33,7 @@ func TestNewBuild(t *testing.T) {
 		Spec: api.PlatformBuildSpec{
 			BuildStrategy:   api.BuildStrategyPod,
 			PublishStrategy: api.PlatformBuildPublishStrategyKaniko,
+			Timeout:         &metav1.Duration{Duration: 5 * time.Minute},
 		},
 	}
 	// create the new build, schedule
