@@ -3,8 +3,8 @@ package api
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 type PlatformBuild struct {
-	ObjectReference
-	Spec PlatformBuildSpec
+	ObjectReference `json:"meta,omitempty"`
+	Spec            PlatformBuildSpec `json:"spec,omitempty"`
 }
 
 type PlatformBuildSpec struct {
