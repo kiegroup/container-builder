@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/ricardozanini/kogito-builder/api"
-	"github.com/ricardozanini/kogito-builder/builder"
-	"github.com/ricardozanini/kogito-builder/client"
+	"github.com/ricardozanini/container-builder/api"
+	"github.com/ricardozanini/container-builder/builder"
+	"github.com/ricardozanini/container-builder/client"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

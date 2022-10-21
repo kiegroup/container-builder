@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"github.com/ricardozanini/kogito-builder/api"
+	"github.com/ricardozanini/container-builder/api"
 )
 
 func newInitializePodAction() Action {

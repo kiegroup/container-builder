@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/ricardozanini/kogito-builder/api"
-	"github.com/ricardozanini/kogito-builder/client"
-	"github.com/ricardozanini/kogito-builder/util"
-	"github.com/ricardozanini/kogito-builder/util/log"
+	"github.com/ricardozanini/container-builder/api"
+	"github.com/ricardozanini/container-builder/client"
+	"github.com/ricardozanini/container-builder/util"
+	"github.com/ricardozanini/container-builder/util/log"
 )
 
 type resource struct {
