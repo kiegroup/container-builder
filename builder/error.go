@@ -3,7 +3,7 @@ package builder
 import (
 	"context"
 
-	"github.com/ricardozanini/kogito-builder/api"
+	"github.com/ricardozanini/container-builder/api"
 )
 
 func newErrorAction() Action {

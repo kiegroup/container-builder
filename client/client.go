@@ -7,7 +7,7 @@ import (
 
 	user "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
-	"github.com/ricardozanini/kogito-builder/util"
+	"github.com/ricardozanini/container-builder/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"

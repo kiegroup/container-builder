@@ -1,4 +1,4 @@
-module github.com/ricardozanini/kogito-builder
+module github.com/ricardozanini/container-builder
 
 go 1.19
 

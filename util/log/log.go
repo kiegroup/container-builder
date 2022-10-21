@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"github.com/ricardozanini/kogito-builder/util"
+	"github.com/ricardozanini/container-builder/util"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
