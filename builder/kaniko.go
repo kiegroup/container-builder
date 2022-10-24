@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/ricardozanini/container-builder/api"
-	"github.com/ricardozanini/container-builder/client"
-	"github.com/ricardozanini/container-builder/util/defaults"
-	"github.com/ricardozanini/container-builder/util/minikube"
-	"github.com/ricardozanini/container-builder/util/registry"
+	"github.com/kiegroup/container-builder/api"
+	"github.com/kiegroup/container-builder/client"
+	"github.com/kiegroup/container-builder/util/defaults"
+	"github.com/kiegroup/container-builder/util/minikube"
+	"github.com/kiegroup/container-builder/util/registry"
 	corev1 "k8s.io/api/core/v1"
 )
 

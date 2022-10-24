@@ -3,7 +3,7 @@ package builder
 import (
 	"context"
 
-	"github.com/ricardozanini/container-builder/api"
+	"github.com/kiegroup/container-builder/api"
 )
 
 func newErrorAction() Action {

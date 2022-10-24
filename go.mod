@@ -1,4 +1,4 @@
-module github.com/ricardozanini/container-builder
+module github.com/kiegroup/container-builder
 
 go 1.19
 

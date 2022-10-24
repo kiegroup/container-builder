@@ -1,4 +1,5 @@
-FROM quay.io/ricardozanini/kogito-serverless-workflow-base:latest AS builder
+#Not yet released Change the 31 st oct with quay.io/kiegroup/kogito-serverless-workflow-base:latest
+FROM quay.io/mdessi/kogito-serverless-workflow-base:latest AS builder
 
 # Kogito User
 USER 1001

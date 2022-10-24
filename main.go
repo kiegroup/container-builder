@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/ricardozanini/container-builder/api"
-	"github.com/ricardozanini/container-builder/builder"
-	"github.com/ricardozanini/container-builder/client"
+	"github.com/kiegroup/container-builder/api"
+	"github.com/kiegroup/container-builder/builder"
+	"github.com/kiegroup/container-builder/client"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

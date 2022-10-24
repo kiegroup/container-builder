@@ -4,12 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/hashicorp/go-version"
-	"github.com/ricardozanini/container-builder/util/defaults"
 	"os"
 	"time"
 
+	"github.com/kiegroup/container-builder/api"
 	"github.com/pkg/errors"
-	"github.com/ricardozanini/container-builder/api"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
