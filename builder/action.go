@@ -3,9 +3,9 @@ package builder
 import (
 	"context"
 
-	"github.com/ricardozanini/container-builder/api"
-	"github.com/ricardozanini/container-builder/client"
-	"github.com/ricardozanini/container-builder/util/log"
+	"github.com/kiegroup/container-builder/api"
+	"github.com/kiegroup/container-builder/client"
+	"github.com/kiegroup/container-builder/util/log"
 )
 
 type Action interface {

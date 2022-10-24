@@ -1,4 +1,5 @@
-FROM quay.io/ricardozanini/kogito-serverless-workflow-base:latest AS builder
+#Not yet released Change the 31 st oct with quay.io/repository/kiegroup/kogito-swf-builder:latest
+FROM quay.io/kiegroup/kogito-swf-builder-nightly:latest AS builder
 
 # Kogito User
 USER 1001

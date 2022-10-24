@@ -6,12 +6,12 @@ import (
 	"path"
 	"strings"
 
+	"github.com/kiegroup/container-builder/client"
 	"github.com/pkg/errors"
-	"github.com/ricardozanini/container-builder/client"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/ricardozanini/container-builder/api"
+	"github.com/kiegroup/container-builder/api"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
