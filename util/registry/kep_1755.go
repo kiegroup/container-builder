@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/kiegroup/container-builder/client"
 	corev1 "k8s.io/api/core/v1"

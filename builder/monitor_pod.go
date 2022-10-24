@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/hashicorp/go-version"
+	"github.com/kiegroup/container-builder/util/defaults"
 	"os"
 	"time"
 
