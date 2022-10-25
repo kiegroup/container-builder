@@ -136,8 +136,8 @@ func FromManager(manager manager.Manager) (Client, error) {
 	}, nil
 }
 
-// NewClientFromRequirements creates a new k8s client from a kubernetes client, a scheme and a configuration.
-func NewClientFromRequirements(client Client, scheme *runtime.Scheme, conf *rest.Config) (Client, error) {
+// FromCtrlClientSchemeAndConfig create client from a kubernetes controller client, a scheme and a configuration.
+func FromCtrlClientSchemeAndConfig(client ctrl.Client, scheme *runtime.Scheme, conf *rest.Config) (Client, error) {
 	var err error
 	var clientset kubernetes.Interface
 	if clientset, err = kubernetes.NewForConfig(conf); err != nil {
