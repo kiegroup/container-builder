@@ -136,6 +136,22 @@ func FromManager(manager manager.Manager) (Client, error) {
 	}, nil
 }
 
+// NewClientFromRequirements creates a new k8s client from a kubernetes client, a scheme and a configuration.
+func NewClientFromRequirements(client Client, scheme *runtime.Scheme, conf *rest.Config) (Client, error) {
+	var err error
+	var clientset kubernetes.Interface
+	if clientset, err = kubernetes.NewForConfig(conf); err != nil {
+		return nil, err
+	}
+
+	return &defaultClient{
+		Client:    client,
+		Interface: clientset,
+		scheme:    scheme,
+		config:    conf,
+	}, nil
+}
+
 // init initialize the k8s client for usage outside the cluster.
 func initialize(kubeconfig string) {
 	if kubeconfig == "" {
