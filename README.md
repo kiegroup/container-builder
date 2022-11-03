@@ -1,6 +1,8 @@
-# Kogito Builder PoC
+# Container Builder
 
 This is a proof of concept for using [Kaniko](https://github.com/GoogleContainerTools/kaniko/blob/main/docs/tutorial.md) and [Camel-K Builder package](https://github.com/apache/camel-k/tree/main/pkg/builder) to build Kogito services in a Kubernetes clusters.
+
+After the phase of tech preview using the code of Kaniko and Camel-K to shape our needs, both approach will be merged in a new project.
 
 ## Requirements
 
@@ -18,17 +20,15 @@ Since Camel-K already does a pretty good job building Camel applications in any 
 
 ## How does it work?
 
-Without going into many details, Camel-K has basically two phases of their build, which I call "Project Assemble" and "Image Build". 
+Camel-K has basically two phases of their build, which are "Project Assemble" and "Image Build".
 In this first phase, Camel-K reads the Route configuration, assemble the Maven project and run the project build.
 Then it takes the Java application and build into an image.
 
-Camel-K has this concept of "Environment Platform" that based on the type of cluster which is running, can pick the right build feature.
+Camel-K has this concept of "Environment Platform" that is based on the type of cluster in use, so it can pick the right build feature.
 For example, source to image on OpenShift clusters or Kaniko on Kubernetes.
 
-Kogito might use this first phase to assemble a specific application based on the sources pushed to the cluster. 
-For example, Serverless Workflow projects can have a slightly different setup than DMN/Decisions one.
-
-For simplicity, I skipped the first phase and assembled the project on a "builder image" for Serverless Workflow projects.
+Kogito might use this first phase to assemble a specific application based on the sources pushed to the cluster.
+For simplicity, we skipped this first phase and assembled the project on a "builder image" for Serverless Workflow projects.
 You can see a [draft for this image here](https://github.com/kiegroup/kogito-images/pull/1322).
 
 This base builder image does the project assembling "ahead of time", so there's no need to run this phase like Camel-K does.
@@ -46,8 +46,7 @@ This initial work supports Kaniko running on Minikube. Has potential to work on 
 
 ## The Next Steps
 
-Despite this code being a PoC, it can evolve to do more and abstract the build stage for a shareable use among both projects.
-There's a ton of `TODO` tags scattered in the code that needs work. 
+Despite this code being a PoC, it can evolve to do more and abstract the build stage for a shareable use among Kaniko and Camel-K.
 
 In a nutshell, a few EPICs:
 
@@ -56,7 +55,48 @@ In a nutshell, a few EPICs:
 - Implement the first stage: "Project Assemble" instead of relying on a pre-built, pre-configured image.
 - Review the API interfaces and types to make sure that aligns with the build abstraction and can cover the majority of use cases.
 
-Keep in mind that the end goal is to use this package in any environment that can run a Go application, despite being a cluster or a local environment.
+Keep in mind that the end goal is to use this package anywhere you can run a Go application.
 
-As we evolve, evaluate the package with Camel-K team to make sure that it can fit their use case the same way it does today with their embedded package. 
+As we evolve, evaluate the package with Camel-K team to make sure that it can fit their use case the same way it does today with their embedded package.
 That might require some work to remove the relation of the integration concept from the build tasks.
+
+## Docker Registry configuration
+
+If we want to connect on a remote Docker registry we must set the following environment variables:
+
+- **DOCKER_HOST**: sets the url to the docker server.
+- **DOCKER_API_VERSION**: sets the version of the API to reach, leave empty for latest.
+- **DOCKER_CERT_PATH**: loads the TLS certificates from.
+- **DOCKER_TLS_VERIFY**: enables or disable TLS verification, off by default.
+
+otherwise a local docker registry will be used if nothing is present
+
+## Podman Registry configuration
+
+To connect on a remote Podman registry we can use one of the following uri connections:
+
+- tcp://localhost:<port>
+- unix:///run/podman/podman.sock
+- ssh://<user>@<host>[:port]/run/podman/podman.sock?secure=True
+
+To connect with a remote server we must set as environment variables the follows:
+Envs
+- CONTAINER_HOST
+- CONTAINER_SSHKEY
+- CONTAINER_PASSPHRASE
+
+Otherwise for local connection will be used the env var
+- XDG_RUNTIME_DIR
+
+with ROOTLESS access
+unix://run/user/1000/podman/podman.sock 
+
+Note start the podman socket with:
+`systemctl --user start podman.socket`
+
+Problems on test with SELinux
+`sudo setenforce Permissive`
+
+NOTE on Registry container 
+TO enable the delete of the images you need to set then env var `REGISTRY_STORAGE_DELETE_ENABLED=true`
+otherwise the delete image return a 405 method not allowed
