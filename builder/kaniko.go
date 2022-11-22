@@ -2,7 +2,6 @@ package builder
 
 import (
 	"context"
-	resource2 "k8s.io/apimachinery/pkg/api/resource"
 	"strings"
 
 	"github.com/kiegroup/container-builder/api"
@@ -64,8 +63,10 @@ func addKanikoTaskToPod(ctx context.Context, c client.Client, build *api.Build, 
 		"--dockerfile=Dockerfile",
 		"--context=dir://" + task.ContextDir,
 		"--destination=" + task.Registry.Address + "/" + task.Image,
-		"--use-new-run",
-		"--snapshotMode=redo",
+	}
+
+	if task.AdditionalFlags != nil && len(task.AdditionalFlags) > 0 {
+		args = append(args, task.AdditionalFlags...)
 	}
 
 	if task.Verbose != nil && *task.Verbose {
@@ -76,16 +77,6 @@ func addKanikoTaskToPod(ctx context.Context, c client.Client, build *api.Build, 
 	env := make([]corev1.EnvVar, 0)
 	volumes := make([]corev1.Volume, 0)
 	volumeMounts := make([]corev1.VolumeMount, 0)
-	resources := corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource2.MustParse("8"),
-			corev1.ResourceMemory: resource2.MustParse("8Gi"),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource2.MustParse("6"),
-			corev1.ResourceMemory: resource2.MustParse("8Gi"),
-		},
-	}
 
 	if task.Registry.Secret != "" {
 		secret, err := getRegistrySecret(ctx, c, pod.Namespace, task.Registry.Secret, kanikoRegistrySecrets)
@@ -115,7 +106,7 @@ func addKanikoTaskToPod(ctx context.Context, c client.Client, build *api.Build, 
 		Env:             env,
 		WorkingDir:      task.ContextDir,
 		VolumeMounts:    volumeMounts,
-		Resources:       resources,
+		Resources:       task.Resources,
 	}
 
 	// We may want to handle possible conflicts

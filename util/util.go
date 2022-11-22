@@ -9,3 +9,7 @@ import (
 func ReadFile(filename string) ([]byte, error) {
 	return os.ReadFile(filepath.Clean(filename))
 }
+
+func Pbool(value bool) *bool {
+	return &value
+}
