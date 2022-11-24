@@ -14,6 +14,11 @@ limitations under the License.
 */
 package test
 
+import (
+	"context"
+	"github.com/docker/docker/client"
+)
+
 const REGISTRY = "registry"
 const REGISTRY_FULL = "docker.io/library/registry"
 
@@ -22,6 +27,10 @@ type Registry interface {
 	StopRegistry()
 }
 
-type Docker struct{}
+type Docker struct {
+	connection *client.Client
+}
 
-type Podman struct{}
+type Podman struct {
+	connection context.Context
+}

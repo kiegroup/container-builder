@@ -28,7 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (p Podman) GetConnection() (context.Context, error) {
+func GetPodmanConnection() (context.Context, error) {
 	// ROOTLESS access
 	sockDir := os.Getenv("XDG_RUNTIME_DIR")
 	socket := "unix:" + sockDir + "/podman/podman.sock"
@@ -40,8 +40,16 @@ func (p Podman) GetConnection() (context.Context, error) {
 	return conn, err
 }
 
+func (p Podman) getConnection() context.Context {
+	connectionLocal := p.connection
+	if connectionLocal == nil {
+		connectionLocal, _ = GetPodmanConnection()
+	}
+	return connectionLocal
+}
+
 func (p Podman) StartRegistry() bool {
-	connection, _ := p.GetConnection()
+	connection := p.getConnection()
 
 	if p.IsRegistryRunning() {
 		fmt.Println("Registry container already running...")
@@ -84,7 +92,7 @@ func (p Podman) StartRegistry() bool {
 }
 
 func (p Podman) IsRegistryImagePresent() bool {
-	connection, _ := p.GetConnection()
+	connection := p.getConnection()
 	imageList, err := images.List(connection, nil)
 	if err != nil {
 		return false
@@ -98,7 +106,7 @@ func (p Podman) IsRegistryImagePresent() bool {
 }
 
 func (p Podman) IsRegistryRunning() bool {
-	connection, _ := p.GetConnection()
+	connection := p.getConnection()
 	containersList, err := containers.List(connection, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -114,7 +122,7 @@ func (p Podman) IsRegistryRunning() bool {
 }
 
 func (p Podman) StopRegistry() bool {
-	connection, _ := p.GetConnection()
+	connection := p.getConnection()
 	containersList, err := containers.List(connection, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -137,7 +145,7 @@ func (p Podman) StopRegistry() bool {
 
 func (p Podman) RemoveRegistryContainerAndImage() {
 	p.StopRegistry()
-	connection, _ := p.GetConnection()
+	connection := p.getConnection()
 	containerList, _ := containers.List(connection, nil)
 	for _, container := range containerList {
 		if container.Image == REGISTRY {

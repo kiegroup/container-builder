@@ -15,14 +15,19 @@ limitations under the License.
 package test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRegistryWithPodman(t *testing.T) {
-
-	p := Podman{}
+	connectionLocal, err := GetPodmanConnection()
+	if err != nil {
+		fmt.Errorf("%s \n", err)
+		assert.FailNow(t, "Connection refused")
+	}
+	p := Podman{connection: connectionLocal}
 	defer p.RemoveRegistryContainerAndImage()
 	assert.Truef(t, p.StartRegistry(), "Registry not started")
 	assert.Truef(t, p.IsRegistryImagePresent(), "Registry image not present")

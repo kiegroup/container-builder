@@ -26,18 +26,35 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-func (d Docker) StartRegistry() bool {
+func GetDockerConnection() (*client.Client, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		fmt.Println(err)
+		return nil, err
 	}
+	return cli, nil
+}
 
+func (d Docker) getConnection() (*client.Client, error) {
+	connectionLocal := d.connection
+	if connectionLocal == nil {
+		return GetDockerConnection()
+	}
+	return connectionLocal, nil
+}
+
+func (d Docker) StartRegistry() bool {
+	cli, err := d.getConnection()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
 	ctx := context.Background()
 	if d.IsRegistryRunning() {
 		return true
 	}
 	if !d.IsRegistryImagePresent() {
-		_, err := cli.ImagePull(context.Background(), REGISTRY, types.ImagePullOptions{})
+		_, err := cli.ImagePull(ctx, REGISTRY, types.ImagePullOptions{})
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -68,8 +85,13 @@ func (d Docker) StartRegistry() bool {
 }
 
 func (d Docker) StopRegistry() bool {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	cli, err := d.getConnection()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	ctx := context.Background()
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -78,13 +100,13 @@ func (d Docker) StopRegistry() bool {
 		if container.Image == REGISTRY {
 			sec, _ := time.ParseDuration("10sec")
 			fmt.Println("Stop registry container")
-			err = cli.ContainerStop(context.Background(), container.ID, &sec)
+			err = cli.ContainerStop(ctx, container.ID, &sec)
 			if err != nil {
 				fmt.Println(err)
 			}
-			_ = cli.ContainerKill(context.Background(), container.ID, "")
+			_ = cli.ContainerKill(ctx, container.ID, "")
 
-			err = cli.ContainerRemove(context.Background(), container.ID, types.ContainerRemoveOptions{})
+			err = cli.ContainerRemove(ctx, container.ID, types.ContainerRemoveOptions{})
 			return err == nil
 		}
 	}
@@ -92,7 +114,7 @@ func (d Docker) StopRegistry() bool {
 }
 
 func (d Docker) IsRegistryRunning() bool {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := d.getConnection()
 	if err != nil {
 		fmt.Println(err)
 		return false
@@ -113,7 +135,7 @@ func (d Docker) IsRegistryRunning() bool {
 }
 
 func (d Docker) IsRegistryImagePresent() bool {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := d.getConnection()
 	if err != nil {
 		fmt.Println(err)
 		return false
@@ -132,27 +154,28 @@ func (d Docker) IsRegistryImagePresent() bool {
 
 func (d Docker) RemoveRegistryContainerAndImage() {
 	d.StopRegistry()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := d.getConnection()
 	if err != nil {
 		fmt.Println(err)
 	}
-	containerList, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	ctx := context.Background()
+	containerList, err := cli.ContainerList(ctx, types.ContainerListOptions{})
 
 	for _, container := range containerList {
 		if container.Image == REGISTRY {
-			err = cli.ContainerRemove(context.Background(), container.ID, types.ContainerRemoveOptions{})
+			err = cli.ContainerRemove(ctx, container.ID, types.ContainerRemoveOptions{})
 			if err != nil {
 				fmt.Println(err)
 			}
 		}
 	}
-	imageList, err := cli.ImageList(context.Background(), types.ImageListOptions{})
+	imageList, err := cli.ImageList(ctx, types.ImageListOptions{})
 	if err != nil {
 		fmt.Println(err)
 	}
 	for _, imagex := range imageList {
 		if imagex.RepoTags[0] == REGISTRY {
-			_, err := cli.ImageRemove(context.Background(), imagex.ID, types.ImageRemoveOptions{})
+			_, err := cli.ImageRemove(ctx, imagex.ID, types.ImageRemoveOptions{})
 			if err != nil {
 				fmt.Println(err)
 			}

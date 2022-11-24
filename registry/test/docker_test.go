@@ -15,13 +15,19 @@ limitations under the License.
 package test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestRegistryWithDocker(t *testing.T) {
 
-	d := Docker{}
+	connectionLocal, err := GetDockerConnection()
+	if err != nil {
+		fmt.Errorf("%s \n", err)
+		assert.FailNow(t, "Connection refused")
+	}
+	d := Docker{connection: connectionLocal}
 	defer d.RemoveRegistryContainerAndImage()
 	assert.Truef(t, d.StartRegistry(), "Registry not started")
 	assert.Truef(t, d.IsRegistryImagePresent(), "Registry image not present")
