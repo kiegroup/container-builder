@@ -1,3 +1,9 @@
+#BUILDTAGS ?= \
+#	$(shell hack/btrfs_installed_tag.sh) \
+#	$(shell hack/btrfs_tag.sh) \
+#	exclude_graphdriver_devicemapper \
+#	exclude_graphdriver_btrfs
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -79,3 +85,9 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 .PHONY: clean
 clean:
 	rm -rf bin/
+
+.PHONY: vendor
+vendor:
+	go mod tidy -compat=1.19
+	go mod vendor
+	go mod verify
