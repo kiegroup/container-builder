@@ -65,6 +65,10 @@ func addKanikoTaskToPod(ctx context.Context, c client.Client, build *api.Build, 
 		"--destination=" + task.Registry.Address + "/" + task.Image,
 	}
 
+	if task.AdditionalFlags != nil && len(task.AdditionalFlags) > 0 {
+		args = append(args, task.AdditionalFlags...)
+	}
+
 	if task.Verbose != nil && *task.Verbose {
 		args = append(args, "-v=debug")
 	}
@@ -102,6 +106,7 @@ func addKanikoTaskToPod(ctx context.Context, c client.Client, build *api.Build, 
 		Env:             env,
 		WorkingDir:      task.ContextDir,
 		VolumeMounts:    volumeMounts,
+		Resources:       task.Resources,
 	}
 
 	// We may want to handle possible conflicts

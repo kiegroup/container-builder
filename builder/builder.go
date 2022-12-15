@@ -3,12 +3,11 @@ package builder
 import (
 	"context"
 	"fmt"
-	"path"
-
 	"github.com/kiegroup/container-builder/api"
 	"github.com/kiegroup/container-builder/client"
 	"github.com/kiegroup/container-builder/util"
 	"github.com/kiegroup/container-builder/util/log"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type resource struct {
@@ -40,6 +39,9 @@ var _ Builder = &builder{}
 type Scheduler interface {
 	WithResource(target string, content []byte) Scheduler
 	WithClient(client client.Client) Scheduler
+	WithKanikoCache(cache api.KanikoTaskCache) Scheduler
+	WithKanikoResources(res corev1.ResourceRequirements) Scheduler
+	WithKanikoAdditionalArgs(args []string) Scheduler
 	Schedule() (*api.Build, error)
 }
 
@@ -69,28 +71,8 @@ func NewBuild(platformBuild api.PlatformBuild, publishImage string, buildName st
 		C:         context.TODO(),
 	}
 
-	// TODO: Improve this check with factories instead
 	if platformBuild.Spec.BuildStrategy == api.BuildStrategyPod && platformBuild.Spec.PublishStrategy == api.PlatformBuildPublishStrategyKaniko {
-		ctx.Build = &api.Build{
-			Spec: api.BuildSpec{
-				Tasks: []api.Task{
-					{Kaniko: &api.KanikoTask{
-						BaseTask: api.BaseTask{Name: "KanikoTask"},
-						PublishTask: api.PublishTask{
-							ContextDir: path.Join("/builder", buildName, "context"),
-							BaseImage:  platformBuild.Spec.BaseImage,
-							Image:      publishImage,
-							Registry:   platformBuild.Spec.Registry,
-						},
-						Cache: api.KanikoTaskCache{},
-					}},
-				},
-				Strategy: api.BuildStrategyPod,
-				Timeout:  *platformBuild.Spec.Timeout,
-			},
-		}
-		ctx.Build.Name = buildName
-		ctx.Build.Namespace = platformBuild.Namespace
+		ctx.Build = api.NewKanikoBuild(platformBuild, publishImage, buildName)
 	} else {
 		panic(fmt.Errorf("BuildStrategy %s with PublishStrategy %s is not supported", platformBuild.Spec.BuildStrategy, platformBuild.Spec.PublishStrategy))
 	}
@@ -126,6 +108,43 @@ func (b *scheduler) Schedule() (*api.Build, error) {
 func (b *builder) WithClient(client client.Client) Builder {
 	b.Context.Client = client
 	return b
+}
+
+// findKanikoTask will extract the first Task with a KanikoTask in a list of Build Tasks
+func findFirstKanikoTask(tasks []api.Task) *api.KanikoTask {
+	if tasks != nil && len(tasks) > 0 {
+		for _, task := range tasks {
+			if task.Kaniko != nil {
+				return task.Kaniko
+			}
+		}
+	}
+	return nil
+}
+
+func (s *scheduler) WithKanikoCache(cache api.KanikoTaskCache) Scheduler {
+	kanikoTask := findFirstKanikoTask(s.Context.Build.Spec.Tasks)
+	if kanikoTask != nil {
+		kanikoTask.Cache = cache
+	}
+	return s
+}
+
+func (s *scheduler) WithKanikoResources(res corev1.ResourceRequirements) Scheduler {
+	kanikoTask := findFirstKanikoTask(s.Context.Build.Spec.Tasks)
+	if kanikoTask != nil {
+		kanikoTask.Resources = res
+	}
+	return s
+}
+
+func (s *scheduler) WithKanikoAdditionalArgs(flags []string) Scheduler {
+	kanikoTask := findFirstKanikoTask(s.Context.Build.Spec.Tasks)
+	if kanikoTask != nil {
+		kanikoTask.AdditionalFlags = flags
+	}
+
+	return s
 }
 
 // Reconcile idempotent build flow control.
