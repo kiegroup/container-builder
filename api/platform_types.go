@@ -46,4 +46,7 @@ const (
 	// PlatformBuildPublishStrategyKaniko uses Kaniko project (https://github.com/GoogleContainerTools/kaniko)
 	// in order to push the incremental images to the image repository. It can be used with `pod` BuildStrategy.
 	PlatformBuildPublishStrategyKaniko PlatformBuildPublishStrategy = "Kaniko"
+
+	// PlatformBuildPublishStrategyBuildah uses Buildah project (https://buildah.io/)
+	PlatformBuildPublishStrategyBuildah = "Buildah"
 )

@@ -121,6 +121,19 @@ func (action *monitorPodAction) Handle(ctx context.Context, build *api.Build) (*
 			if t := task.Kaniko; t != nil {
 				build.Status.Image = t.Image
 				break
+			} else if t := task.Buildah; t != nil {
+				build.Status.Image = t.Image
+
+				break
+			}
+		}
+
+		// Reconcile image digest from build container status if available
+		for _, container := range pod.Status.ContainerStatuses {
+			if container.Name == "buildah" {
+				build.Status.Digest = container.State.Terminated.Message
+
+				break
 			}
 		}
 

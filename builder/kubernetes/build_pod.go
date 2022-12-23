@@ -3,11 +3,9 @@ package kubernetes
 import (
 	"context"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/kiegroup/container-builder/client"
-	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -15,13 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-type registrySecret struct {
-	fileName    string
-	mountPath   string
-	destination string
-	refEnv      string
-}
 
 func newBuildPod(ctx context.Context, c client.Client, build *api.Build) (*corev1.Pod, error) {
 	pod := &corev1.Pod{
@@ -46,6 +37,11 @@ func newBuildPod(ctx context.Context, c client.Client, build *api.Build) (*corev
 		switch {
 		case task.Kaniko != nil:
 			err := addKanikoTaskToPod(ctx, c, build, task.Kaniko, pod)
+			if err != nil {
+				return nil, err
+			}
+		case task.Buildah != nil:
+			err := addBuildahTaskToPod(ctx, c, build, task.Buildah, pod)
 			if err != nil {
 				return nil, err
 			}
@@ -90,50 +86,6 @@ func deleteBuilderPod(ctx context.Context, c client.Client, build *api.Build) er
 	}
 
 	return err
-}
-
-func getRegistrySecret(ctx context.Context, c client.Client, ns, name string, registrySecrets []registrySecret) (registrySecret, error) {
-	secret := corev1.Secret{}
-	err := c.Get(ctx, types.NamespacedName{Name: name, Namespace: ns}, &secret)
-	if err != nil {
-		return registrySecret{}, err
-	}
-	for _, k := range registrySecrets {
-		if _, ok := secret.Data[k.fileName]; ok {
-			return k, nil
-		}
-	}
-	return registrySecret{}, errors.New("unsupported secret type for registry authentication")
-}
-
-func addRegistrySecret(name string, secret registrySecret, volumes *[]corev1.Volume, volumeMounts *[]corev1.VolumeMount, env *[]corev1.EnvVar) {
-	*volumes = append(*volumes, corev1.Volume{
-		Name: "registry-secret",
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: name,
-				Items: []corev1.KeyToPath{
-					{
-						Key:  secret.fileName,
-						Path: secret.destination,
-					},
-				},
-			},
-		},
-	})
-
-	*volumeMounts = append(*volumeMounts, corev1.VolumeMount{
-		Name:      "registry-secret",
-		MountPath: secret.mountPath,
-		ReadOnly:  true,
-	})
-
-	if secret.refEnv != "" {
-		*env = append(*env, corev1.EnvVar{
-			Name:  secret.refEnv,
-			Value: path.Join(secret.mountPath, secret.destination),
-		})
-	}
 }
 
 func proxyFromEnvironment() []corev1.EnvVar {

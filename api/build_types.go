@@ -75,6 +75,8 @@ type RegistrySpec struct {
 type Task struct {
 	// a KanikoTask, for Kaniko strategy
 	Kaniko *KanikoTask `json:"kaniko,omitempty"`
+	// a BuildahTask, for Buildah strategy
+	Buildah *BuildahTask `json:"buildah,omitempty"`
 }
 
 // BaseTask is a base for the struct hierarchy
@@ -115,6 +117,18 @@ type KanikoTaskCache struct {
 	Enabled *bool `json:"enabled,omitempty"`
 	// the PVC used to store the cache
 	PersistentVolumeClaim string `json:"persistentVolumeClaim,omitempty"`
+}
+
+// BuildahTask is used to configure Buildah
+type BuildahTask struct {
+	BaseTask    `json:",inline"`
+	PublishTask `json:",inline"`
+	// The platform of build image
+	Platform string `json:"platform,omitempty"`
+	// log more information
+	Verbose *bool `json:"verbose,omitempty"`
+	// docker image to use
+	ExecutorImage string `json:"executorImage,omitempty"`
 }
 
 // BuildPhase --
