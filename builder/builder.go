@@ -73,6 +73,8 @@ func NewBuild(platformBuild api.PlatformBuild, publishImage string, buildName st
 
 	if platformBuild.Spec.BuildStrategy == api.BuildStrategyPod && platformBuild.Spec.PublishStrategy == api.PlatformBuildPublishStrategyKaniko {
 		ctx.Build = api.NewKanikoBuild(platformBuild, publishImage, buildName)
+	} else if platformBuild.Spec.BuildStrategy == api.BuildStrategyPod && platformBuild.Spec.PublishStrategy == api.PlatformBuildPublishStrategyBuildah {
+		ctx.Build = api.NewBuildahBuild(platformBuild, publishImage, buildName)
 	} else {
 		panic(fmt.Errorf("BuildStrategy %s with PublishStrategy %s is not supported", platformBuild.Spec.BuildStrategy, platformBuild.Spec.PublishStrategy))
 	}
