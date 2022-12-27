@@ -103,7 +103,6 @@ func TestNewBuildWithKanikoCustomizations(t *testing.T) {
 
 	// create the new build, schedule with cache enabled, a specific set of resources and additional flags
 	build, err := NewBuild(BuilderInfo{FinalImageName: "quay.io/kiegroup/buildexample:latest", BuildUniqueName: "build1", Platform: platform}).
-		WithClient(c).
 		WithProperty(KanikoCache, api.KanikoTaskCache{Enabled: util.Pbool(true), PersistentVolumeClaim: "kaniko-cache-pv"}).
 		WithResourceRequirements(v1.ResourceRequirements{
 			Limits: v1.ResourceList{
@@ -118,6 +117,7 @@ func TestNewBuildWithKanikoCustomizations(t *testing.T) {
 		WithAdditionalArgs(addFlags).
 		WithResource("Dockerfile", dockerFile).
 		WithResource("greetings.sw.json", workflowDefinition).
+		WithClient(c).
 		Schedule()
 
 	assert.NoError(t, err)
@@ -141,4 +141,6 @@ func TestNewBuildWithKanikoCustomizations(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, pod)
 	assert.Len(t, pod.Spec.Volumes, 1)
+
+	assert.Subset(t, pod.Spec.Containers[0].Args, addFlags)
 }

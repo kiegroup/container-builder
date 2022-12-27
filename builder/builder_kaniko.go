@@ -10,7 +10,7 @@ import (
 )
 
 type kanikoScheduler struct {
-	scheduler
+	*scheduler
 	KanikoTask *api.KanikoTask
 }
 
@@ -41,16 +41,19 @@ func (k kanikoSchedulerHandler) CreateScheduler(info BuilderInfo, buildCtx build
 	buildCtx.Build.Name = info.BuildUniqueName
 	buildCtx.Build.Namespace = info.Platform.Namespace
 
-	return &kanikoScheduler{
-		KanikoTask: &kanikoTask,
-		scheduler: scheduler{
+	sched := &kanikoScheduler{
+		&scheduler{
 			builder: builder{
 				L:       log.WithName(util.ComponentName),
 				Context: buildCtx,
 			},
 			Resources: make([]resource, 0),
 		},
+		&kanikoTask,
 	}
+	// we hold our own reference for the default methods to return the right object
+	sched.Scheduler = sched
+	return sched
 }
 
 func (k kanikoSchedulerHandler) CanHandle(info BuilderInfo) bool {
@@ -76,7 +79,7 @@ func (sk *kanikoScheduler) WithAdditionalArgs(flags []string) Scheduler {
 
 func (sk *kanikoScheduler) Schedule() (*api.Build, error) {
 	// verify if we really need this
-	for _, task := range sk.Context.Build.Spec.Tasks {
+	for _, task := range sk.builder.Context.Build.Spec.Tasks {
 		if task.Kaniko != nil {
 			task.Kaniko = sk.KanikoTask
 			break

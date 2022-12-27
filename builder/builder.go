@@ -39,7 +39,8 @@ type builder struct {
 }
 
 type scheduler struct {
-	builder
+	Scheduler
+	builder   builder
 	Resources []resource
 }
 
@@ -93,51 +94,46 @@ func NewBuild(info BuilderInfo) Scheduler {
 		C:         context.TODO(),
 	}
 
-	var sched Scheduler
 	for _, v := range schedulers {
 		if v.CanHandle(info) {
-			sched = v.CreateScheduler(info, ctx)
-			break
+			return v.CreateScheduler(info, ctx)
 		}
 	}
-	if sched == nil {
-		panic(fmt.Errorf("BuildStrategy %s with PublishStrategy %s is not supported", info.Platform.Spec.BuildStrategy, info.Platform.Spec.PublishStrategy))
-	}
-	return sched
+	panic(fmt.Errorf("BuildStrategy %s with PublishStrategy %s is not supported", info.Platform.Spec.BuildStrategy, info.Platform.Spec.PublishStrategy))
 }
 
 func (s *scheduler) WithClient(client client.Client) Scheduler {
 	s.builder.WithClient(client)
-	return s
+	return s.Scheduler
 }
 
 func (s *scheduler) WithResource(target string, content []byte) Scheduler {
 	s.Resources = append(s.Resources, resource{target, content})
-	return s
+	return s.Scheduler
 }
 
 func (s *scheduler) WithResourceRequirements(res corev1.ResourceRequirements) Scheduler {
 	// no default implementation.
-	return s
+	return s.Scheduler
 }
 
 func (s *scheduler) WithAdditionalArgs(args []string) Scheduler {
 	// no default implementation.
-	return s
+	return s.Scheduler
 }
 
 func (s *scheduler) WithProperty(property BuilderProperty, object interface{}) Scheduler {
 	// no default implementation
-	return s
+	return s.Scheduler
 }
 
 // Schedule schedules a new build in the platform
 func (s *scheduler) Schedule() (*api.Build, error) {
 	// TODO: create a handler to mount the resources according to the platform/context options (for now we only have CM, PoC level)
-	if err := mountResourcesWithConfigMap(&s.Context, &s.Resources); err != nil {
+	if err := mountResourcesWithConfigMap(&s.builder.Context, &s.Resources); err != nil {
 		return nil, err
 	}
-	return s.Reconcile()
+	return s.builder.Reconcile()
 }
 
 func (b *builder) WithClient(client client.Client) Builder {
