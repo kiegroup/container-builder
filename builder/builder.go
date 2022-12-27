@@ -86,8 +86,8 @@ func FromBuild(build *api.Build) Builder {
 	}
 }
 
-// NewBuilder is the API entry for the Builder. Create a new Build instance based on PlatformBuild.
-func NewBuilder(info BuilderInfo) Scheduler {
+// NewBuild is the API entry for the Builder. Create a new Build instance based on PlatformBuild.
+func NewBuild(info BuilderInfo) Scheduler {
 	ctx := buildContext{
 		BaseImage: info.Platform.Spec.BaseImage,
 		C:         context.TODO(),
