@@ -40,7 +40,7 @@ func TestNewBuild(t *testing.T) {
 		},
 	}
 	// create the new build, schedule
-	build, err := NewScheduler(BuilderInfo{FinalImageName: "quay.io/kiegroup/buildexample:latest", BuildUniqueName: "build1", Platform: platform}).
+	build, err := NewBuilder(BuilderInfo{FinalImageName: "quay.io/kiegroup/buildexample:latest", BuildUniqueName: "build1", Platform: platform}).
 		WithClient(c).
 		WithResource("Dockerfile", dockerFile).
 		WithResource("greetings.sw.json", workflowDefinition).
@@ -102,7 +102,7 @@ func TestNewBuildWithKanikoCustomizations(t *testing.T) {
 	addFlags[0] = "--use-new-run=true"
 
 	// create the new build, schedule with cache enabled, a specific set of resources and additional flags
-	build, err := NewScheduler(BuilderInfo{FinalImageName: "quay.io/kiegroup/buildexample:latest", BuildUniqueName: "build1", Platform: platform}).
+	build, err := NewBuilder(BuilderInfo{FinalImageName: "quay.io/kiegroup/buildexample:latest", BuildUniqueName: "build1", Platform: platform}).
 		WithClient(c).
 		WithProperty(KanikoCache, api.KanikoTaskCache{Enabled: util.Pbool(true), PersistentVolumeClaim: "kaniko-cache-pv"}).
 		WithResourceRequirements(v1.ResourceRequirements{

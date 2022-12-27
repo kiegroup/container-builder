@@ -13,7 +13,7 @@ jobs:
       - name: Install package
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: btrfs-progs libgpgme-dev
+          packages: btrfs-progs libgpgme-dev libdevmapper-dev
           version: 1.0
       - uses: actions/setup-go@v2
         with:

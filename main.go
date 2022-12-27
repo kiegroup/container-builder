@@ -64,7 +64,7 @@ func main() {
 		},
 	}
 
-	build, err := builder.NewScheduler(builder.BuilderInfo{FinalImageName: "greetings:latest", BuildUniqueName: "kogito-test", Platform: platform}).
+	build, err := builder.NewBuilder(builder.BuilderInfo{FinalImageName: "greetings:latest", BuildUniqueName: "kogito-test", Platform: platform}).
 		WithResource("Dockerfile", dockerFile).WithResource("greetings.sw.json", source).
 		WithClient(cli).
 		Schedule()
