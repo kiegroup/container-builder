@@ -11,17 +11,17 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Install package
-        run: |
-          sudo apt-get -y install
-          btrfs-progs \
-          libgpgme-dev
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: btrfs-progs libgpgme-dev
+          version: 1.0
       - uses: actions/setup-go@v2
         with:
           go-version: 1.19
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - run: make test --tags=integration
+      - run: make test
       - uses: shogo82148/actions-goveralls@v1
         with:
           path-to-profile: cover.out
