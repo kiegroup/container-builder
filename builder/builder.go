@@ -3,12 +3,23 @@ package builder
 import (
 	"context"
 	"fmt"
+
 	"github.com/kiegroup/container-builder/api"
 	"github.com/kiegroup/container-builder/client"
 	"github.com/kiegroup/container-builder/util"
 	"github.com/kiegroup/container-builder/util/log"
 	corev1 "k8s.io/api/core/v1"
 )
+
+type BuilderProperty string
+
+const KanikoCache BuilderProperty = "kaniko-cache"
+
+type BuilderInfo struct {
+	FinalImageName  string
+	BuildUniqueName string
+	Platform        api.PlatformBuild
+}
 
 type resource struct {
 	Target  string
@@ -35,13 +46,22 @@ type scheduler struct {
 var _ Scheduler = &scheduler{}
 var _ Builder = &builder{}
 
+// available schedulers, add them in priority order
+var schedulers = map[string]schedulerHandler{
+	"kaniko": &kanikoSchedulerHandler{},
+}
+
 // Scheduler provides an interface to add resources and schedule a new build
 type Scheduler interface {
+	// WithResource the actual file/resource to add to the builder. Might be called multiple times.
 	WithResource(target string, content []byte) Scheduler
 	WithClient(client client.Client) Scheduler
-	WithKanikoCache(cache api.KanikoTaskCache) Scheduler
-	WithKanikoResources(res corev1.ResourceRequirements) Scheduler
-	WithKanikoAdditionalArgs(args []string) Scheduler
+	// WithResourceRequirements Kubernetes resource requirements to be passed to the underlying builder if necessary. For example, a builder pod might require specific resources underneath.
+	WithResourceRequirements(res corev1.ResourceRequirements) Scheduler
+	// WithAdditionalArgs array of strings to pass to the underlying builder. For example "--myarg=myvalue" or "MY_ENV=MY_VALUE". The args are passed separated by spaces.
+	WithAdditionalArgs(args []string) Scheduler
+	// WithProperty specialized property known by inner implementations for additional properties to configure the underlying builder
+	WithProperty(property BuilderProperty, object interface{}) Scheduler
 	Schedule() (*api.Build, error)
 }
 
@@ -51,8 +71,12 @@ type Builder interface {
 	Reconcile() (*api.Build, error)
 }
 
+type schedulerHandler interface {
+	CreateScheduler(info BuilderInfo, buildCtx buildContext) Scheduler
+	CanHandle(info BuilderInfo) bool
+}
+
 func FromBuild(build *api.Build) Builder {
-	// TODO: verify Build integrity
 	return &builder{
 		L: log.WithName(util.ComponentName),
 		Context: buildContext{
@@ -62,89 +86,63 @@ func FromBuild(build *api.Build) Builder {
 	}
 }
 
-// NewBuild is the API entry for the BuilderScheduler. Create a new Build instance based on PlatformBuild.
-func NewBuild(platformBuild api.PlatformBuild, publishImage string, buildName string) Scheduler {
-	// TODO: Figure if we need a PlatformBuild builder fluent api.
-	// TODO: Verify structure integrity
+// NewScheduler is the API entry for the Builder. Create a new Build instance based on PlatformBuild.
+func NewScheduler(info BuilderInfo) Scheduler {
 	ctx := buildContext{
-		BaseImage: platformBuild.Spec.BaseImage,
+		BaseImage: info.Platform.Spec.BaseImage,
 		C:         context.TODO(),
 	}
 
-	if platformBuild.Spec.BuildStrategy == api.BuildStrategyPod && platformBuild.Spec.PublishStrategy == api.PlatformBuildPublishStrategyKaniko {
-		ctx.Build = api.NewKanikoBuild(platformBuild, publishImage, buildName)
-	} else {
-		panic(fmt.Errorf("BuildStrategy %s with PublishStrategy %s is not supported", platformBuild.Spec.BuildStrategy, platformBuild.Spec.PublishStrategy))
+	var sched Scheduler
+	for _, v := range schedulers {
+		if v.CanHandle(info) {
+			sched = v.CreateScheduler(info, ctx)
+			break
+		}
 	}
-
-	return &scheduler{
-		builder: builder{
-			L:       log.WithName(util.ComponentName),
-			Context: ctx,
-		},
-		Resources: make([]resource, 0),
+	if sched == nil {
+		panic(fmt.Errorf("BuildStrategy %s with PublishStrategy %s is not supported", info.Platform.Spec.BuildStrategy, info.Platform.Spec.PublishStrategy))
 	}
+	return sched
 }
 
-func (b *scheduler) WithClient(client client.Client) Scheduler {
-	b.builder.WithClient(client)
-	return b
+func (s *scheduler) WithClient(client client.Client) Scheduler {
+	s.builder.WithClient(client)
+	return s
 }
 
-func (b *scheduler) WithResource(target string, content []byte) Scheduler {
-	b.Resources = append(b.Resources, resource{target, content})
-	return b
+func (s *scheduler) WithResource(target string, content []byte) Scheduler {
+	s.Resources = append(s.Resources, resource{target, content})
+	return s
+}
+
+func (s *scheduler) WithResourceRequirements(res corev1.ResourceRequirements) Scheduler {
+	// no default implementation.
+	return s
+}
+
+func (s *scheduler) WithAdditionalArgs(args []string) Scheduler {
+	// no default implementation.
+	return s
+}
+
+func (s *scheduler) WithProperty(property BuilderProperty, object interface{}) Scheduler {
+	// no default implementation
+	return s
 }
 
 // Schedule schedules a new build in the platform
-func (b *scheduler) Schedule() (*api.Build, error) {
+func (s *scheduler) Schedule() (*api.Build, error) {
 	// TODO: create a handler to mount the resources according to the platform/context options (for now we only have CM, PoC level)
-	if err := mountResourcesWithConfigMap(&b.Context, &b.Resources); err != nil {
+	if err := mountResourcesWithConfigMap(&s.Context, &s.Resources); err != nil {
 		return nil, err
 	}
-	return b.Reconcile()
+	return s.Reconcile()
 }
 
 func (b *builder) WithClient(client client.Client) Builder {
 	b.Context.Client = client
 	return b
-}
-
-// findKanikoTask will extract the first Task with a KanikoTask in a list of Build Tasks
-func findFirstKanikoTask(tasks []api.Task) *api.KanikoTask {
-	if tasks != nil && len(tasks) > 0 {
-		for _, task := range tasks {
-			if task.Kaniko != nil {
-				return task.Kaniko
-			}
-		}
-	}
-	return nil
-}
-
-func (s *scheduler) WithKanikoCache(cache api.KanikoTaskCache) Scheduler {
-	kanikoTask := findFirstKanikoTask(s.Context.Build.Spec.Tasks)
-	if kanikoTask != nil {
-		kanikoTask.Cache = cache
-	}
-	return s
-}
-
-func (s *scheduler) WithKanikoResources(res corev1.ResourceRequirements) Scheduler {
-	kanikoTask := findFirstKanikoTask(s.Context.Build.Spec.Tasks)
-	if kanikoTask != nil {
-		kanikoTask.Resources = res
-	}
-	return s
-}
-
-func (s *scheduler) WithKanikoAdditionalArgs(flags []string) Scheduler {
-	kanikoTask := findFirstKanikoTask(s.Context.Build.Spec.Tasks)
-	if kanikoTask != nil {
-		kanikoTask.AdditionalFlags = flags
-	}
-
-	return s
 }
 
 // Reconcile idempotent build flow control.
@@ -187,13 +185,11 @@ func (b *builder) Reconcile() (*api.Build, error) {
 
 				target = newTarget
 			}
-
 			break
 		}
 	}
 
 	return target, nil
-
 }
 
 func (b *builder) CancelBuild() (*api.Build, error) {
