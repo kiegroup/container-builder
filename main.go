@@ -24,11 +24,13 @@ import (
 	"github.com/kiegroup/container-builder/api"
 	"github.com/kiegroup/container-builder/builder"
 	"github.com/kiegroup/container-builder/client"
+	v1 "k8s.io/api/core/v1"
+	resource2 "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 /*
-Usage example
+Usage example. Please note that you must have a valid Minikube/KIND/OpenShift/Kubernetes environment up and running.
 */
 
 func main() {
@@ -64,8 +66,22 @@ func main() {
 		},
 	}
 
+	cpuQty, _ := resource2.ParseQuantity("1")
+	memQty, _ := resource2.ParseQuantity("4Gi")
+
 	build, err := builder.NewBuild(builder.BuilderInfo{FinalImageName: "greetings:latest", BuildUniqueName: "kogito-test", Platform: platform}).
 		WithResource("Dockerfile", dockerFile).WithResource("greetings.sw.json", source).
+		WithAdditionalArgs([]string{"--build-arg=QUARKUS_PACKAGE_TYPE=mutable-jar", "--build-arg=QUARKUS_LAUNCH_DEVMODE=true", "--build-arg=SCRIPT_DEBUG=false"}). //, "--build-arg=MAVEN_ARGS_APPEND=-Xmx4G", "--build-arg=JAVA_OPTS=-Xmx4G"}).
+		WithResourceRequirements(v1.ResourceRequirements{
+			Limits: v1.ResourceList{
+				v1.ResourceCPU:    cpuQty,
+				v1.ResourceMemory: memQty,
+			},
+			Requests: v1.ResourceList{
+				v1.ResourceCPU:    cpuQty,
+				v1.ResourceMemory: memQty,
+			},
+		}).
 		WithClient(cli).
 		Schedule()
 	if err != nil {

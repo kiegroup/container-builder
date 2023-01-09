@@ -9,7 +9,7 @@ After the phase of tech preview using the code of Kaniko and Camel-K to shape ou
 Since it's a PoC level code, it was made to work with Minikube only:
 
 - Install minikube locally
-- Enable the internal registry via `minikube addon enable registry`
+- Enable the internal registry via `minikube addons enable registry`
 - Run with `go run main.go`
 
 The [`main.go`](main.go) file has a usage example.
