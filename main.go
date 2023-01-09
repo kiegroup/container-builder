@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package main
 
 import (
@@ -8,11 +24,13 @@ import (
 	"github.com/kiegroup/container-builder/api"
 	"github.com/kiegroup/container-builder/builder"
 	"github.com/kiegroup/container-builder/client"
+	v1 "k8s.io/api/core/v1"
+	resource2 "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 /*
-Example of usage
+Usage example. Please note that you must have a valid Kubernetes environment up and running.
 */
 
 func main() {
@@ -48,8 +66,22 @@ func main() {
 		},
 	}
 
-	build, err := builder.NewBuild(platform, "greetings:latest", "kogito-test").
+	cpuQty, _ := resource2.ParseQuantity("1")
+	memQty, _ := resource2.ParseQuantity("4Gi")
+
+	build, err := builder.NewBuild(builder.BuilderInfo{FinalImageName: "greetings:latest", BuildUniqueName: "kogito-test", Platform: platform}).
 		WithResource("Dockerfile", dockerFile).WithResource("greetings.sw.json", source).
+		WithAdditionalArgs([]string{"--build-arg=QUARKUS_PACKAGE_TYPE=mutable-jar", "--build-arg=QUARKUS_LAUNCH_DEVMODE=true", "--build-arg=SCRIPT_DEBUG=false"}).
+		WithResourceRequirements(v1.ResourceRequirements{
+			Limits: v1.ResourceList{
+				v1.ResourceCPU:    cpuQty,
+				v1.ResourceMemory: memQty,
+			},
+			Requests: v1.ResourceList{
+				v1.ResourceCPU:    cpuQty,
+				v1.ResourceMemory: memQty,
+			},
+		}).
 		WithClient(cli).
 		Schedule()
 	if err != nil {

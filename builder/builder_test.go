@@ -2,12 +2,13 @@ package builder
 
 import (
 	"context"
-	"github.com/kiegroup/container-builder/util"
-	resource2 "k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/kiegroup/container-builder/util"
+	resource2 "k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiegroup/container-builder/api"
 	"github.com/kiegroup/container-builder/util/test"
@@ -39,7 +40,7 @@ func TestNewBuild(t *testing.T) {
 		},
 	}
 	// create the new build, schedule
-	build, err := NewBuild(platform, "quay.io/kiegroup/buildexample:latest", "build1").
+	build, err := NewBuild(BuilderInfo{FinalImageName: "quay.io/kiegroup/buildexample:latest", BuildUniqueName: "build1", Platform: platform}).
 		WithClient(c).
 		WithResource("Dockerfile", dockerFile).
 		WithResource("greetings.sw.json", workflowDefinition).
@@ -101,10 +102,9 @@ func TestNewBuildWithKanikoCustomizations(t *testing.T) {
 	addFlags[0] = "--use-new-run=true"
 
 	// create the new build, schedule with cache enabled, a specific set of resources and additional flags
-	build, err := NewBuild(platform, "quay.io/kiegroup/buildexample:latest", "build1").
-		WithClient(c).
-		WithKanikoCache(api.KanikoTaskCache{Enabled: util.Pbool(true), PersistentVolumeClaim: "kaniko-cache-pv"}).
-		WithKanikoResources(v1.ResourceRequirements{
+	build, err := NewBuild(BuilderInfo{FinalImageName: "quay.io/kiegroup/buildexample:latest", BuildUniqueName: "build1", Platform: platform}).
+		WithProperty(KanikoCache, api.KanikoTaskCache{Enabled: util.Pbool(true), PersistentVolumeClaim: "kaniko-cache-pv"}).
+		WithResourceRequirements(v1.ResourceRequirements{
 			Limits: v1.ResourceList{
 				v1.ResourceCPU:    cpuQty,
 				v1.ResourceMemory: memQty,
@@ -114,9 +114,10 @@ func TestNewBuildWithKanikoCustomizations(t *testing.T) {
 				v1.ResourceMemory: memQty,
 			},
 		}).
-		WithKanikoAdditionalArgs(addFlags).
+		WithAdditionalArgs(addFlags).
 		WithResource("Dockerfile", dockerFile).
 		WithResource("greetings.sw.json", workflowDefinition).
+		WithClient(c).
 		Schedule()
 
 	assert.NoError(t, err)
@@ -140,4 +141,6 @@ func TestNewBuildWithKanikoCustomizations(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, pod)
 	assert.Len(t, pod.Spec.Volumes, 1)
+
+	assert.Subset(t, pod.Spec.Containers[0].Args, addFlags)
 }

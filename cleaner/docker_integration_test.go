@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 /*
 Copyright 2022 Red Hat, Inc. and/or its affiliates.
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +18,12 @@ limitations under the License.
 package cleaner
 
 import (
+	"testing"
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"testing"
-	"time"
 )
 
 // --------------------------- TEST SUITE -----------------
