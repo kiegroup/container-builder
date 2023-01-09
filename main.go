@@ -30,7 +30,7 @@ import (
 )
 
 /*
-Usage example. Please note that you must have a valid Minikube/KIND/OpenShift/Kubernetes environment up and running.
+Usage example. Please note that you must have a valid Kubernetes environment up and running.
 */
 
 func main() {
@@ -71,7 +71,7 @@ func main() {
 
 	build, err := builder.NewBuild(builder.BuilderInfo{FinalImageName: "greetings:latest", BuildUniqueName: "kogito-test", Platform: platform}).
 		WithResource("Dockerfile", dockerFile).WithResource("greetings.sw.json", source).
-		WithAdditionalArgs([]string{"--build-arg=QUARKUS_PACKAGE_TYPE=mutable-jar", "--build-arg=QUARKUS_LAUNCH_DEVMODE=true", "--build-arg=SCRIPT_DEBUG=false"}). //, "--build-arg=MAVEN_ARGS_APPEND=-Xmx4G", "--build-arg=JAVA_OPTS=-Xmx4G"}).
+		WithAdditionalArgs([]string{"--build-arg=QUARKUS_PACKAGE_TYPE=mutable-jar", "--build-arg=QUARKUS_LAUNCH_DEVMODE=true", "--build-arg=SCRIPT_DEBUG=false"}).
 		WithResourceRequirements(v1.ResourceRequirements{
 			Limits: v1.ResourceList{
 				v1.ResourceCPU:    cpuQty,

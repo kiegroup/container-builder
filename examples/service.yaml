@@ -12,7 +12,7 @@ spec:
       nodePort: 31961
   selector:
     app: kogito-greetings
-  type: LoadBalancer
+  type: NodePort
   sessionAffinity: None
   externalTrafficPolicy: Cluster
   ipFamilies:

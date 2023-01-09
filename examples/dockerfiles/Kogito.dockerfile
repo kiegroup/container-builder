@@ -1,4 +1,7 @@
-FROM quay.io/ricardozanini/kogito-swf-builder:latest AS builder
+FROM quay.io/kiegroup/kogito-swf-builder:latest AS builder
+
+# Kogito User
+USER 1001
 
 ARG QUARKUS_PACKAGE_TYPE="jar"
 ARG SCRIPT_DEBUG="false"
