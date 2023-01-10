@@ -72,26 +72,26 @@ func (d DockerLocalRegistry) StartRegistry() string {
 
 	ctx := context.Background()
 	registryID := d.GetRegistryRunningID()
-	logrus.Infof("registryID %s", registryID)
+
 	if len(registryID) > 0 {
-		logrus.Info("Registry already running")
+		logrus.Infof("Registry ID %s is already running", registryID)
 		return registryID
 	}
 
 	if !d.IsRegistryImagePresent() {
 		logrus.Info("Registry Image Pull")
-		_, err := d.Connection.ImagePull(ctx, REGISTRY, types.ImagePullOptions{})
+		_, err := d.Connection.ImagePull(ctx, REGISTRY_IMG, types.ImagePullOptions{})
 		if err != nil {
 			fmt.Println(err)
 			return ""
 		}
-	} else {
-		logrus.Info("Registry Image ready")
 	}
+
+	time.Sleep(2 * time.Second) // needed on CI
 
 	logrus.Info("Registry Container Create")
 	resp, err := d.Connection.ContainerCreate(ctx, &container.Config{
-		Image:        REGISTRY,
+		Image:        REGISTRY_IMG,
 		ExposedPorts: nat.PortSet{"5000": struct{}{}},
 	},
 		&container.HostConfig{
@@ -99,7 +99,7 @@ func (d DockerLocalRegistry) StartRegistry() string {
 		},
 		nil,
 		nil,
-		REGISTRY)
+		REGISTRY_IMG)
 
 	if err != nil {
 		logrus.Error(err)
@@ -155,7 +155,7 @@ func (d DockerLocalRegistry) GetRegistryRunningID() string {
 	}
 
 	for _, container := range containers {
-		if container.Image == REGISTRY {
+		if container.Image == REGISTRY_IMG {
 			return container.ID
 		}
 	}
@@ -169,7 +169,21 @@ func (d DockerLocalRegistry) IsRegistryImagePresent() bool {
 		return false
 	}
 	for _, imagex := range imageList {
-		if imagex.RepoTags[0] == REGISTRY || (imagex.RepoDigests != nil && strings.HasPrefix(imagex.RepoDigests[0], REGISTRY)) {
+		if imagex.RepoTags[0] == REGISTRY_IMG || (imagex.RepoDigests != nil && strings.HasPrefix(imagex.RepoDigests[0], REGISTRY_IMG)) {
+			return true
+		}
+	}
+	return false
+}
+
+func (d DockerLocalRegistry) IsImagePresent(name string) bool {
+
+	imageList, err := d.Connection.ImageList(context.Background(), types.ImageListOptions{})
+	if err != nil {
+		return false
+	}
+	for _, imagex := range imageList {
+		if imagex.RepoTags[0] == name || (imagex.RepoDigests != nil && strings.HasPrefix(imagex.RepoDigests[0], name)) {
 			return true
 		}
 	}
@@ -178,20 +192,31 @@ func (d DockerLocalRegistry) IsRegistryImagePresent() bool {
 
 func SetupDockerSocket() (DockerLocalRegistry, string, Docker) {
 	dockerSocketConn, err := GetDockerConnection()
+
 	if err != nil {
 		logrus.Errorf("Can't get Docker socket")
 		return DockerLocalRegistry{}, "", Docker{}
 	}
 	dockerSock := Docker{Connection: dockerSocketConn}
-	dockerSock.PurgeContainer("", REGISTRY)
+	//logrus.Infof("Pull images for test")
+	//err = dockerSock.PullImage(REGISTRY_IMG_FULL_TAG)
+	if err != nil {
+		logrus.Errorf("Pull error in SetupDockerSocket %s", err)
+	}
+	_, err = dockerSock.PurgeContainer("", REGISTRY_IMG)
+	if err != nil {
+		logrus.Errorf("Purge  error in SetupDockerSocket %s", err)
+	}
 
 	d := DockerLocalRegistry{Connection: dockerSocketConn}
+	logrus.Info("Check if registry image is present :", d.IsRegistryImagePresent())
 	if !d.IsRegistryImagePresent() {
-		dockerSock.PullImage(TEST_IMAGE_TAG)
+		dockerSock.PullImage(REGISTRY_IMG_FULL_TAG)
 	}
 	registryID := d.GetRegistryRunningID()
 	if len(registryID) == 0 {
 		registryID = d.StartRegistry()
+		logrus.Errorf("Registry started")
 	} else {
 		logrus.Infof("Registry already up and running with ID %s", registryID)
 	}
