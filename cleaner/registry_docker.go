@@ -69,8 +69,9 @@ func (d DockerLocalRegistry) StartRegistry() string {
 
 	ctx := context.Background()
 	registryID := d.GetRegistryRunningID()
-	logrus.Infof("registryID %s", registryID)
+
 	if len(registryID) > 0 {
+		logrus.Infof("registryID %s", registryID)
 		logrus.Info("Registry already running")
 		return registryID
 	}
