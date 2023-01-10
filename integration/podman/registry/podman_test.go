@@ -16,7 +16,7 @@ package registry
 
 import (
 	"github.com/kiegroup/container-builder/cleaner"
-	test "github.com/kiegroup/container-builder/test/registry"
+	test "github.com/kiegroup/container-builder/integration/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"

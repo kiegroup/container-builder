@@ -12,11 +12,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package docker
+package registry
 
 import (
 	"github.com/kiegroup/container-builder/cleaner"
-	test "github.com/kiegroup/container-builder/test/registry"
+	test "github.com/kiegroup/container-builder/integration/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
