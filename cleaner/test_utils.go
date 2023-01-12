@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-package util
+package cleaner
 
-const (
-	// ComponentName just a name to identify this package/component/application
-	ComponentName = "kogito-builder"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func CheckRepositoriesSize(t *testing.T, size int, registryContainer RegistryContainer) []string {
+	repos, err := registryContainer.GetRepositories()
+	assert.Nil(t, err, "Error calling GetRepositories()")
+	assert.True(t, len(repos) == size)
+	return repos
+}
