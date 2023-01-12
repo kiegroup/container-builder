@@ -1,5 +1,4 @@
-//go:build integration
-// +build integration
+//go:build integration_docker
 
 /*
  * Copyright 2022 Red Hat, Inc. and/or its affiliates.
@@ -30,18 +29,18 @@ import (
 
 // --------------------------- TEST SUITE -----------------
 
-type DockerTestSuite struct {
+type RegistryDockerTestSuite struct {
 	suite.Suite
 	LocalRegistry DockerLocalRegistry
 	RegistryID    string
 	Docker        Docker
 }
 
-func TestDockerTestSuite(t *testing.T) {
-	suite.Run(t, new(DockerTestSuite))
+func TestRegistryDockerIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(RegistryDockerTestSuite))
 }
 
-func (suite *DockerTestSuite) SetupSuite() {
+func (suite *RegistryDockerTestSuite) SetupSuite() {
 	dockerRegistryContainer, registryID, docker := SetupDockerSocket()
 	if len(registryID) > 0 {
 		suite.LocalRegistry = dockerRegistryContainer
@@ -52,7 +51,7 @@ func (suite *DockerTestSuite) SetupSuite() {
 	}
 }
 
-func (suite *DockerTestSuite) TearDownSuite() {
+func (suite *RegistryDockerTestSuite) TearDownSuite() {
 	registryID := suite.LocalRegistry.GetRegistryRunningID()
 	if len(registryID) > 0 {
 		DockerTearDown(suite.LocalRegistry)
@@ -65,14 +64,14 @@ func (suite *DockerTestSuite) TearDownSuite() {
 
 // -------------------------------------- TESTS -----------------------------
 
-func (suite *DockerTestSuite) TestDockerRegistry() {
+func (suite *RegistryDockerTestSuite) TestDockerRegistry() {
 	assert.Truef(suite.T(), suite.RegistryID != "", "Registry not started")
 	assert.Truef(suite.T(), suite.LocalRegistry.IsRegistryImagePresent(), "Registry image not present")
 	assert.Truef(suite.T(), suite.LocalRegistry.GetRegistryRunningID() == suite.RegistryID, "Registry container not running")
 	assert.True(suite.T(), suite.LocalRegistry.Connection.DaemonHost() == "unix:///var/run/docker.sock")
 }
 
-func (suite *DockerTestSuite) TestPullTagPush() {
+func (suite *RegistryDockerTestSuite) TestPullTagPush() {
 	assert.Truef(suite.T(), suite.RegistryID != "", "Registry not started")
 	registryContainer, err := GetRegistryContainer()
 	assert.Nil(suite.T(), err)
@@ -88,7 +87,7 @@ func (suite *DockerTestSuite) TestPullTagPush() {
 	logrus.Info("Repo Size after pull image = ", len(repos))
 }
 
-func dockerPullTagPushOnRegistryContainer(suite *DockerTestSuite) bool {
+func dockerPullTagPushOnRegistryContainer(suite *RegistryDockerTestSuite) bool {
 	dockerSocketConn, errSock := GetDockerConnection()
 	if errSock != nil {
 		assert.FailNow(suite.T(), "Cant get docker socket")

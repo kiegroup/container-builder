@@ -1,5 +1,4 @@
-//go:build integration
-// +build integration
+//go:build integration_podman
 
 /*
  * Copyright 2022 Red Hat, Inc. and/or its affiliates.
@@ -29,18 +28,18 @@ import (
 )
 
 // --------------------------- TEST SUITE -----------------
-type PodmanTestSuite struct {
+type RegistryPodmanTestSuite struct {
 	suite.Suite
 	LocalRegistry PodmanLocalRegistry
 	RegistryID    string
 	Podman        Podman
 }
 
-func TestPodmanTestSuite(t *testing.T) {
-	suite.Run(t, new(PodmanTestSuite))
+func TestRegistryPodmanIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(RegistryPodmanTestSuite))
 }
 
-func (suite *PodmanTestSuite) SetupSuite() {
+func (suite *RegistryPodmanTestSuite) SetupSuite() {
 	localRegistry, registryID, podman := SetupPodmanSocket()
 	if len(registryID) > 0 {
 		suite.LocalRegistry = localRegistry
@@ -51,7 +50,7 @@ func (suite *PodmanTestSuite) SetupSuite() {
 	}
 }
 
-func (suite *PodmanTestSuite) TearDownSuite() {
+func (suite *RegistryPodmanTestSuite) TearDownSuite() {
 	registryID := suite.LocalRegistry.GetRegistryRunningID()
 	if len(registryID) > 0 {
 		PodmanTearDown(suite.LocalRegistry)
@@ -63,13 +62,13 @@ func (suite *PodmanTestSuite) TearDownSuite() {
 
 // -------------------------------------- TESTS -----------------------------
 
-func (suite *PodmanTestSuite) TestRegistry() {
+func (suite *RegistryPodmanTestSuite) TestRegistry() {
 	assert.Truef(suite.T(), suite.RegistryID != "", "Registry not started")
 	assert.Truef(suite.T(), suite.LocalRegistry.IsRegistryImagePresent(), "Registry image not present")
 	assert.Truef(suite.T(), suite.LocalRegistry.IsRegistryRunning(), "Registry container not running")
 }
 
-func (suite *PodmanTestSuite) TestPullTagPush() {
+func (suite *RegistryPodmanTestSuite) TestPullTagPush() {
 
 	assert.Truef(suite.T(), suite.RegistryID != "", "Registry not started")
 	registryContainer, err := GetRegistryContainer()
@@ -86,7 +85,7 @@ func (suite *PodmanTestSuite) TestPullTagPush() {
 	logrus.Info("Repo Size after pull image = ", len(repos))
 }
 
-func podmanPullTagPushOnRegistryContainer(suite *PodmanTestSuite) bool {
+func podmanPullTagPushOnRegistryContainer(suite *RegistryPodmanTestSuite) bool {
 	podmanSocketConn, errSock := GetPodmanConnection()
 	if errSock != nil {
 		assert.FailNow(suite.T(), "Cant get podman socket")
