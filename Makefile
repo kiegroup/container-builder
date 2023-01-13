@@ -99,3 +99,7 @@ docker-integration-test: ## Test docker integration tests
 .PHONY: podman-integration-test
 podman-integration-test: ## Test podman integration tests
 	go test ./... -tags integration_podman
+
+.PHONY: kaniko-docker-integration-test
+kaniko-docker-integration-test: ## Test kaniko integration docker tests
+	go test ./... -tags integration_kaniko_docker

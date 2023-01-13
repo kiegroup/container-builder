@@ -40,11 +40,13 @@ jobs:
         container-engine:
           - docker
           - podman
+          - kaniko-docker
       fail-fast: false
     concurrency:
       group: kogito_serverless_operator_pr-integration-${{ matrix.container-engine }}-${{ github.head_ref }}
       cancel-in-progress: true
-    timeout-minutes: 120
+    # should be set back to 120 once kogito-swf-builder 1.33 is released
+    timeout-minutes: 700
     name: Integration tests (${{ matrix.container-engine }})
     runs-on: ubuntu-22.04
     steps:
