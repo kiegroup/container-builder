@@ -198,8 +198,7 @@ func SetupDockerSocket() (DockerLocalRegistry, string, Docker) {
 		return DockerLocalRegistry{}, "", Docker{}
 	}
 	dockerSock := Docker{Connection: dockerSocketConn}
-	//logrus.Infof("Pull images for test")
-	//err = dockerSock.PullImage(REGISTRY_IMG_FULL_TAG)
+
 	if err != nil {
 		logrus.Errorf("Pull error in SetupDockerSocket %s", err)
 	}
