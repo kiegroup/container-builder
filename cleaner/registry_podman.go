@@ -76,7 +76,7 @@ func (p PodmanLocalRegistry) StartRegistry() string {
 
 	if !p.IsRegistryImagePresent() {
 		logrus.Info("Registry Image Pull ")
-		_, err := images.Pull(connection, REGISTRY, nil)
+		_, err := images.Pull(connection, REGISTRY_IMG, nil)
 		if err != nil {
 			fmt.Println(err)
 			return ""
@@ -86,7 +86,7 @@ func (p PodmanLocalRegistry) StartRegistry() string {
 	}
 
 	logrus.Info("Registry Container Create")
-	s := specgen.NewSpecGenerator(REGISTRY, false)
+	s := specgen.NewSpecGenerator(REGISTRY_IMG, false)
 	s.Terminal = true
 	s.PublishExposedPorts = true
 	s.PortMappings = []typesMapping.PortMapping{
@@ -172,7 +172,7 @@ func (p PodmanLocalRegistry) GetRegistryRunningID() string {
 		return ""
 	}
 	for _, container := range containerList {
-		if container.Image == REGISTRY_FULLWITH_TAG {
+		if container.Image == REGISTRY_IMG_FULL_TAG {
 			return container.ID
 		}
 	}
@@ -185,7 +185,7 @@ func (p PodmanLocalRegistry) IsRegistryImagePresent() bool {
 		return false
 	}
 	for _, imagex := range imageList {
-		if strings.HasPrefix(imagex.Names[0], REGISTRY_FULL) {
+		if strings.HasPrefix(imagex.Names[0], REGISTRY_IMG_FULL) {
 			return true
 		}
 	}
@@ -199,7 +199,7 @@ func (p PodmanLocalRegistry) IsRegistryRunning() bool {
 	}
 
 	for _, container := range containersList {
-		if strings.HasPrefix(container.Image, REGISTRY_FULL) {
+		if strings.HasPrefix(container.Image, REGISTRY_IMG_FULL) {
 			logrus.Info("Registry container already running...")
 			return true
 		}
@@ -210,7 +210,7 @@ func (p PodmanLocalRegistry) IsRegistryRunning() bool {
 func (p PodmanLocalRegistry) RemoveRegistryContainerAndImage() {
 	containerList, _ := containers.List(p.Connection, nil)
 	for _, container := range containerList {
-		if container.Image == REGISTRY {
+		if container.Image == REGISTRY_IMG {
 			_ = containers.Stop(context.Background(), container.ID, nil)
 			_ = containers.Kill(context.Background(), container.ID, nil)
 			_, _ = containers.Remove(context.Background(), container.ID, nil)
@@ -225,7 +225,7 @@ func SetupPodmanSocket() (PodmanLocalRegistry, string, Podman) {
 		return PodmanLocalRegistry{}, "", Podman{}
 	}
 	podmanSock := Podman{Connection: podmanSocketConn}
-	podmanSock.PurgeContainer("", REGISTRY_FULL)
+	podmanSock.PurgeContainer("", REGISTRY_IMG_FULL)
 
 	connectionLocal, err := GetPodmanConnection()
 	if err != nil {
@@ -233,7 +233,7 @@ func SetupPodmanSocket() (PodmanLocalRegistry, string, Podman) {
 	}
 	p := PodmanLocalRegistry{Connection: connectionLocal}
 	if !p.IsRegistryImagePresent() {
-		podmanSock.PullImage(TEST_IMAGE_TAG)
+		podmanSock.PullImage(TEST_IMG_TAG)
 	}
 	registryID := p.GetRegistryRunningID()
 	if len(registryID) == 0 {
