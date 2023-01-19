@@ -14,6 +14,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type registrySecret struct {
+	fileName    string
+	mountPath   string
+	destination string
+	refEnv      string
+}
+
 func newBuildPod(ctx context.Context, c client.Client, build *api.Build) (*corev1.Pod, error) {
 	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{

@@ -48,5 +48,5 @@ const (
 	PlatformBuildPublishStrategyKaniko PlatformBuildPublishStrategy = "Kaniko"
 
 	// PlatformBuildPublishStrategyBuildah uses Buildah project (https://buildah.io/)
-	PlatformBuildPublishStrategyBuildah = "Buildah"
+	PlatformBuildPublishStrategyBuildah PlatformBuildPublishStrategy = "Buildah"
 )

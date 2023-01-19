@@ -9,7 +9,7 @@ func NewBuildahBuild(platformBuild PlatformBuild, publishImage string, buildName
 		Spec: BuildSpec{
 			Tasks: []Task{
 				{Buildah: &BuildahTask{
-					BaseTask: BaseTask{Name: "BuildahTask"},
+					BaseTask: BaseTask{Name: "buildah-task"},
 					PublishTask: PublishTask{
 						BaseImage: platformBuild.Spec.BaseImage,
 						Image:     publishImage,

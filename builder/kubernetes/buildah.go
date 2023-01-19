@@ -1,4 +1,4 @@
-package builder
+package kubernetes
 
 import (
 	"context"
@@ -38,13 +38,6 @@ var (
 		serviceCABuildahRegistryConfigMap,
 	}
 )
-
-type registrySecret struct {
-	fileName    string
-	mountPath   string
-	destination string
-	refEnv      string
-}
 
 var (
 	plainDockerBuildahRegistrySecret = registrySecret{
@@ -171,6 +164,10 @@ func addBuildahTaskToPod(ctx context.Context, c ctrl.Reader, build *api.Build, t
 	pod.Spec.Volumes = append(pod.Spec.Volumes, volumes...)
 
 	addContainerToPod(build, container, pod)
+
+	// Make sure there is one container defined
+	pod.Spec.Containers = pod.Spec.InitContainers[len(pod.Spec.InitContainers)-1 : len(pod.Spec.InitContainers)]
+	pod.Spec.InitContainers = pod.Spec.InitContainers[:len(pod.Spec.InitContainers)-1]
 
 	return nil
 }

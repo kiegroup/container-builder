@@ -1,4 +1,4 @@
-package builder
+package kubernetes
 
 import (
 	"github.com/kiegroup/container-builder/api"
@@ -19,7 +19,7 @@ var _ schedulerHandler = &buildahSchedulerHandler{}
 
 func (k buildahSchedulerHandler) CreateScheduler(info BuilderInfo, buildCtx buildContext) Scheduler {
 	buildahTask := api.BuildahTask{
-		BaseTask: api.BaseTask{Name: "BuildahTask"},
+		BaseTask: api.BaseTask{Name: "buildah-task"},
 		PublishTask: api.PublishTask{
 			BaseImage: info.Platform.Spec.BaseImage,
 			Image:     info.FinalImageName,
