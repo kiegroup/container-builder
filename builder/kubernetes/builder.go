@@ -48,7 +48,8 @@ var _ Builder = &builder{}
 
 // available schedulers, add them in priority order
 var schedulers = map[string]schedulerHandler{
-	"kaniko": &kanikoSchedulerHandler{},
+	"kaniko":  &kanikoSchedulerHandler{},
+	"buildah": &buildahSchedulerHandler{},
 }
 
 // Scheduler provides an interface to add resources and schedule a new build

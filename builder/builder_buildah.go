@@ -54,7 +54,7 @@ func (k buildahSchedulerHandler) CreateScheduler(info BuilderInfo, buildCtx buil
 }
 
 func (k buildahSchedulerHandler) CanHandle(info BuilderInfo) bool {
-	return info.Platform.Spec.BuildStrategy == api.BuildStrategyPod && info.Platform.Spec.PublishStrategy == api.PlatformBuildPublishStrategyKaniko
+	return info.Platform.Spec.BuildStrategy == api.BuildStrategyPod && info.Platform.Spec.PublishStrategy == api.PlatformBuildPublishStrategyBuildah
 }
 
 func (sk *buildahScheduler) Schedule() (*api.Build, error) {
