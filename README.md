@@ -97,6 +97,40 @@ Note start the podman socket with:
 Problems on test with SELinux
 `sudo setenforce Permissive`
 
-NOTE on Registry container 
-TO enable the delete of the images you need to set then env var `REGISTRY_STORAGE_DELETE_ENABLED=true`
-otherwise the delete image return a 405 method not allowed
+NOTE on Registry container
+TO enable the images deletion you need to set the following environment variable:
+```bash
+REGISTRY_STORAGE_DELETE_ENABLED=true
+```
+otherwise it will return an HTTP 405 error (Not Allowed).
+
+## Kaniko Vanilla
+Kaniko Vanilla is our API to run a Kaniko build outside Kubernetes Cluster
+when it is needed to measure the time of a dockerfile to correctly improve the operations.
+
+To run Kaniko locally first we need to start a local registry:
+
+```sh 
+docker run -d -p 5000:5000 --name registry registry:latest
+```
+
+then after replaced <user> with your current user and <projectpath> with your current project path
+run a build with
+```sh 
+docker run  \
+        --net=host \
+        -v /<projectpath>/examples:/workspace \
+        -v /home/<user>/.docker/config.json:/root/.docker/config.json \
+        -e DOCKER_CONFIG=/root/.docker \
+        gcr.io/kaniko-project/executor:latest \
+        -f /workspace/dockerfiles/Kogito.dockerfile \
+        -d localhost:5000/kaniko-test/kaniko-dockerfile_test_swf \
+        --force \
+        -c /workspace \
+        --verbosity debug 
+```
+
+to see the image in the container registry open your browser at the address:
+```sh 
+http://localhost:5000/v2/_catalog
+```
