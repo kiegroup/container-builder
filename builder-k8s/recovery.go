@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package builder
+package builder_k8s
 
 import (
 	"context"
+	//builder2 "github.com/kiegroup/container-builder/builder"
 	"time"
 
 	"github.com/jpillora/backoff"

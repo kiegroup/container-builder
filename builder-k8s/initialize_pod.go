@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package builder
+package builder_k8s
 
 import (
 	"context"
-
 	"github.com/kiegroup/container-builder/api"
 	"github.com/pkg/errors"
 )

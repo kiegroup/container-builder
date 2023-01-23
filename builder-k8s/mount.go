@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package builder
+package builder_k8s
 
 import (
 	"context"
 	"fmt"
-
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

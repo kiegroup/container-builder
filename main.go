@@ -18,11 +18,11 @@ package main
 
 import (
 	"fmt"
+	builder "github.com/kiegroup/container-builder/builder-k8s"
 	"os"
 	"time"
 
 	"github.com/kiegroup/container-builder/api"
-	"github.com/kiegroup/container-builder/builder"
 	"github.com/kiegroup/container-builder/client"
 	v1 "k8s.io/api/core/v1"
 	resource2 "k8s.io/apimachinery/pkg/api/resource"

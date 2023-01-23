@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builder
+package builder_k8s
 
 import (
 	"context"
