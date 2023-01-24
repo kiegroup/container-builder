@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package builder_k8s
+package kubernetes
 
 import (
 	"context"

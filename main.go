@@ -18,7 +18,7 @@ package main
 
 import (
 	"fmt"
-	builder "github.com/kiegroup/container-builder/builder-k8s"
+	builder "github.com/kiegroup/container-builder/builder/kubernetes"
 	"os"
 	"time"
 
