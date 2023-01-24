@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/kiegroup/container-builder/api"
-	//builder2 "github.com/kiegroup/container-builder/builder-k8s"
 	"github.com/kiegroup/container-builder/client"
 	"github.com/kiegroup/container-builder/util"
 	"github.com/kiegroup/container-builder/util/log"
