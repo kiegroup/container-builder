@@ -46,7 +46,7 @@ jobs:
       group: kogito_serverless_operator_pr-integration-${{ matrix.container-engine }}-${{ github.head_ref }}
       cancel-in-progress: true
     # should be set back to 120 once kogito-swf-builder 1.33 is released
-    timeout-minutes: 800
+    timeout-minutes: 120
     name: Integration tests (${{ matrix.container-engine }})
     runs-on: ubuntu-22.04
     steps:
