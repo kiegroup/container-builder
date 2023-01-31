@@ -1,9 +1,8 @@
-package builder
+package kubernetes
 
 import (
 	"context"
 	"fmt"
-
 	"github.com/kiegroup/container-builder/api"
 	"github.com/kiegroup/container-builder/client"
 	"github.com/kiegroup/container-builder/util"

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package builder
+package kubernetes
 
 import (
 	"context"
 	"fmt"
-
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
