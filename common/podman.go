@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2023 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package cleaner
+package common
 
 import (
 	"context"
-	"os"
-
 	"github.com/containers/podman/v4/pkg/bindings"
 	"github.com/containers/podman/v4/pkg/bindings/containers"
 	"github.com/containers/podman/v4/pkg/bindings/images"
 	"github.com/containers/podman/v4/pkg/domain/entities"
 	"github.com/sirupsen/logrus"
+	"os"
 )
 
 /*
@@ -34,8 +32,11 @@ import (
  or ssh://<user>@<host>[:port]/run/podman/podman.sock?secure=True
 */
 
-func (p Podman) GetRemoteConnection(uri string, identity string) (context.Context, error) {
-	conn, err := bindings.NewConnectionWithIdentity(context.Background(), uri, identity, true)
+func GetRootlessPodmanConnection() (context.Context, error) {
+	// ROOTLESS access
+	sockDir := os.Getenv("XDG_RUNTIME_DIR")
+	socket := "unix:" + sockDir + "/podman/podman.sock"
+	conn, err := bindings.NewConnection(context.Background(), socket)
 	if err != nil {
 		logrus.Errorf("%s \n", err)
 		return nil, err
@@ -43,11 +44,22 @@ func (p Podman) GetRemoteConnection(uri string, identity string) (context.Contex
 	return conn, err
 }
 
-func (p Podman) GetConnection() (context.Context, error) {
-	// ROOTLESS access
-	sockDir := os.Getenv("XDG_RUNTIME_DIR")
-	socket := "unix:" + sockDir + "/podman/podman.sock"
+func GetRootPodmanConnection() (context.Context, error) {
+	socket := "unix:/run/podman/podman.sock"
 	conn, err := bindings.NewConnection(context.Background(), socket)
+	if err != nil {
+		logrus.Errorf("%s \n", err)
+		return nil, err
+	}
+	return conn, err
+}
+
+type Podman struct {
+	Connection context.Context
+}
+
+func (p Podman) GetRemoteConnection(uri string, identity string) (context.Context, error) {
+	conn, err := bindings.NewConnectionWithIdentity(context.Background(), uri, identity, true)
 	if err != nil {
 		logrus.Errorf("%s \n", err)
 		return nil, err

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cleaner
+package common
 
 import (
 	"fmt"
@@ -169,7 +169,7 @@ func (d DockerLocalRegistry) IsRegistryImagePresent() bool {
 		return false
 	}
 	for _, imagex := range imageList {
-		if imagex.RepoTags[0] == REGISTRY_IMG || (imagex.RepoDigests != nil && strings.HasPrefix(imagex.RepoDigests[0], REGISTRY_IMG)) {
+		if (len(imagex.RepoTags) > 0 && imagex.RepoTags[0] == REGISTRY_IMG) || (imagex.RepoDigests != nil && strings.HasPrefix(imagex.RepoDigests[0], REGISTRY_IMG)) {
 			return true
 		}
 	}

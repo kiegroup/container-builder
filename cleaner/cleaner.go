@@ -16,22 +16,9 @@
 
 package cleaner
 
-import (
-	"context"
-
-	"github.com/docker/docker/client"
-)
-
 type RegistryCleaner interface {
 	RemoveImagesUntagged() (bool, error)
 	RemoveDanglingImages() (bool, error)
 	PurgeImages() (bool, error)
 	RemoveImagesFiltered(repo string, tag string) (bool, error)
-}
-
-type Docker struct {
-	Connection *client.Client
-}
-type Podman struct {
-	Connection context.Context
 }

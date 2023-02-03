@@ -17,12 +17,13 @@
 package cleaner
 
 import (
+	"github.com/kiegroup/container-builder/common"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func CheckRepositoriesSize(t *testing.T, size int, registryContainer RegistryContainer) []string {
+func CheckRepositoriesSize(t *testing.T, size int, registryContainer common.RegistryContainer) []string {
 	repos, err := registryContainer.GetRepositories()
 	assert.Nil(t, err, "Error calling GetRepositories()")
 	assert.True(t, len(repos) == size)

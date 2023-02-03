@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package cleaner
+package common
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	typesMapping "github.com/containers/common/libnetwork/types"
 	"github.com/containers/podman/v4/libpod/define"
-	"github.com/containers/podman/v4/pkg/bindings"
 	"github.com/containers/podman/v4/pkg/bindings/containers"
 	"github.com/containers/podman/v4/pkg/bindings/images"
 	"github.com/containers/podman/v4/pkg/specgen"
@@ -32,22 +30,10 @@ import (
 	"golang.org/x/net/context"
 )
 
-func GetPodmanConnection() (context.Context, error) {
-	// ROOTLESS access
-	sockDir := os.Getenv("XDG_RUNTIME_DIR")
-	socket := "unix:" + sockDir + "/podman/podman.sock"
-	conn, err := bindings.NewConnection(context.Background(), socket)
-	if err != nil {
-		logrus.Errorf("%s \n", err)
-		return nil, err
-	}
-	return conn, err
-}
-
 func (p PodmanLocalRegistry) getConnection() (context.Context, error) {
 	connectionLocal := p.Connection
 	if connectionLocal == nil {
-		connectionLocal, err := GetPodmanConnection()
+		connectionLocal, err := GetRootlessPodmanConnection()
 		return connectionLocal, err
 	}
 	return connectionLocal, nil
@@ -185,7 +171,7 @@ func (p PodmanLocalRegistry) IsRegistryImagePresent() bool {
 		return false
 	}
 	for _, imagex := range imageList {
-		if strings.HasPrefix(imagex.Names[0], REGISTRY_IMG_FULL) {
+		if len(imagex.Names) > 0 && strings.HasPrefix(imagex.Names[0], REGISTRY_IMG_FULL) {
 			return true
 		}
 	}
@@ -219,7 +205,7 @@ func (p PodmanLocalRegistry) RemoveRegistryContainerAndImage() {
 }
 
 func SetupPodmanSocket() (PodmanLocalRegistry, string, Podman) {
-	podmanSocketConn, err := GetPodmanConnection()
+	podmanSocketConn, err := GetRootlessPodmanConnection()
 	if err != nil {
 		logrus.Errorf("Can't get Podman socket")
 		return PodmanLocalRegistry{}, "", Podman{}
@@ -227,7 +213,7 @@ func SetupPodmanSocket() (PodmanLocalRegistry, string, Podman) {
 	podmanSock := Podman{Connection: podmanSocketConn}
 	podmanSock.PurgeContainer("", REGISTRY_IMG_FULL)
 
-	connectionLocal, err := GetPodmanConnection()
+	connectionLocal, err := GetRootlessPodmanConnection()
 	if err != nil {
 		fmt.Printf("%s \n", err)
 	}

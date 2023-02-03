@@ -1,4 +1,4 @@
-//go:build integration_docker
+//go:build integration_buildah
 
 /*
  * Copyright 2023 Red Hat, Inc. and/or its affiliates.
@@ -15,43 +15,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cleaner
+package builder
 
 import (
 	"github.com/kiegroup/container-builder/common"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
-type DockerTestSuite struct {
+type BuildahTestSuite struct {
 	suite.Suite
-	LocalRegistry common.DockerLocalRegistry
+	LocalRegistry common.PodmanLocalRegistry
 	RegistryID    string
-	Docker        common.Docker
+	Podman        common.Podman
 }
 
-func (suite *DockerTestSuite) SetupSuite() {
-	dockerRegistryContainer, registryID, docker := common.SetupDockerSocket()
+func (suite *BuildahTestSuite) SetupSuite() {
+	localRegistry, registryID, podman := common.SetupPodmanSocket()
 	if len(registryID) > 0 {
-		suite.LocalRegistry = dockerRegistryContainer
+		suite.LocalRegistry = localRegistry
 		suite.RegistryID = registryID
-		suite.Docker = docker
+		suite.Podman = podman
 	} else {
-		assert.FailNow(suite.T(), "Initialization failed %s", registryID)
+		assert.FailNow(suite.T(), "Initialization failed")
 	}
 }
 
-func (suite *DockerTestSuite) TearDownSuite() {
+func (suite *BuildahTestSuite) TearDownSuite() {
 	registryID := suite.LocalRegistry.GetRegistryRunningID()
 	if len(registryID) > 0 {
-		common.DockerTearDown(suite.LocalRegistry)
+		common.PodmanTearDown(suite.LocalRegistry)
 	} else {
 		suite.LocalRegistry.StopRegistry()
 	}
-	purged, err := suite.Docker.PurgeContainer("", common.REGISTRY_IMG)
-	if err != nil {
-		logrus.Errorf("Error during purged container in TearDown Suite %t", err)
-	}
-	logrus.Infof("Purged containers %t", purged)
+	suite.Podman.PurgeContainer("", common.REGISTRY_IMG_FULL)
 }

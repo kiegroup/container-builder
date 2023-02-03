@@ -91,11 +91,26 @@ Otherwise for local connection will be used the env var
 with ROOTLESS access
 unix://run/user/1000/podman/podman.sock 
 
-Note start the podman socket with:
+Note start the podman rootless socket with:
 `systemctl --user start podman.socket`
+
+To start podman root mode
+`systemctl start podman.socket`
 
 Problems on test with SELinux
 `sudo setenforce Permissive`
+
+Development debug
+`podman --log-level=debug system service -t 0`
+
+`journalctl --user --no-pager -u podman.socket`
+
+Problems on mixing sysregistry v1/v2 is not supported
+add on /etc/containers/registries.conf
+`[[registry]]
+insecure = true
+location = "localhost:5000"`
+
 
 NOTE on Registry container
 TO enable the images deletion you need to set the following environment variable:

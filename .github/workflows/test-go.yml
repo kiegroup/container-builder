@@ -41,6 +41,7 @@ jobs:
           - docker
           - podman
           - kaniko-docker
+          - buildah
       fail-fast: false
     concurrency:
       group: kogito_serverless_operator_pr-integration-${{ matrix.container-engine }}-${{ github.head_ref }}
@@ -74,5 +75,14 @@ jobs:
       - name: Start Podman socket
         run: |
           systemctl --user start podman.socket
+          systemctl --user status podman.socket
       - name: Run integration tests
-        run: make ${{ matrix.container-engine }}-integration-test
+        run: |
+          mkdir -p ~/.config/systemd/user/podman.service.d/
+          printf "[Service]\nExecStart=\nExecStart=/usr/bin/podman $LOGGING system service -t 0\nDelegate=true\nType=exec\nKillMode=process\nEnvironment=LOGGING="--log-level=info"\n" > ~/.config/systemd/user/podman.service.d/override.conf
+          systemctl --user daemon-reload
+          systemctl --user start podman.service
+          pid=$(systemctl --user show podman.service  | grep ^MainPID | sed -e 's|MainPID=||')
+          sudo prlimit --pid $pid --nofile=262144:262144
+          sudo prlimit --pid $$ --nofile=262144:262144
+          make ${{ matrix.container-engine }}-integration-test
