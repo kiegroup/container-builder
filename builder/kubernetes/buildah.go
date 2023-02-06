@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kiegroup/container-builder/api"
+	"github.com/kiegroup/container-builder/client"
 	"github.com/kiegroup/container-builder/util/defaults"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -58,13 +59,14 @@ var (
 	}
 )
 
-func addBuildahTaskToPod(ctx context.Context, c ctrl.Reader, build *api.Build, task *api.BuildahTask, pod *corev1.Pod) error {
+func addBuildahTaskToPod(ctx context.Context, c client.Client, build *api.Build, task *api.BuildahTask, pod *corev1.Pod) error {
 	var bud []string
 
 	bud = []string{
 		"buildah",
 		"bud",
 		"--storage-driver=vfs",
+		"--ulimit nofile=4096:4096",
 	}
 
 	if task.Platform != "" {
@@ -148,6 +150,18 @@ func addBuildahTaskToPod(ctx context.Context, c ctrl.Reader, build *api.Build, t
 	image := task.ExecutorImage
 	if image == "" {
 		image = fmt.Sprintf("%s:v%s", defaults.BuildahDefaultImageName, defaults.BuildahVersion)
+	}
+
+	contextDir := []string{
+		"/builder",
+		task.Name,
+		"context",
+	}
+	task.PublishTask.ContextDir = strings.Join(contextDir, "/")
+
+	// TODO: should be handled by a mount build context handler instead since we can have many possibilities
+	if err := addResourcesToVolume(ctx, c, task.PublishTask, build, &volumes, &volumeMounts); err != nil {
+		return err
 	}
 
 	container := corev1.Container{

@@ -64,5 +64,5 @@ func TestNewBuildWithBuildah(t *testing.T) {
 	err = c.Get(context.TODO(), types.NamespacedName{Name: podName, Namespace: ns}, pod)
 	assert.NoError(t, err)
 	assert.NotNil(t, pod)
-	assert.Len(t, pod.Spec.Volumes, 0)
+	assert.Len(t, pod.Spec.Volumes, 1)
 }

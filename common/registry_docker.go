@@ -215,7 +215,7 @@ func SetupDockerSocket() (DockerLocalRegistry, string, Docker) {
 	registryID := d.GetRegistryRunningID()
 	if len(registryID) == 0 {
 		registryID = d.StartRegistry()
-		logrus.Errorf("Registry started")
+		logrus.Infof("Registry started")
 	} else {
 		logrus.Infof("Registry already up and running with ID %s", registryID)
 	}
