@@ -3,14 +3,17 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/kiegroup/container-builder/api"
 	"github.com/kiegroup/container-builder/client"
 	"github.com/kiegroup/container-builder/util/defaults"
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"path/filepath"
-	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
+	"github.com/kiegroup/container-builder/util/registry"
 )
 
 const BuildahPlatform = "BuildahPlatform"
@@ -65,8 +68,9 @@ func addBuildahTaskToPod(ctx context.Context, c client.Client, build *api.Build,
 	bud = []string{
 		"buildah",
 		"bud",
-		"--storage-driver=vfs",
+		"--storage-driver vfs",
 		"--ulimit nofile=4096:4096",
+		"--tls-verify=false",
 	}
 
 	if task.Platform != "" {
@@ -85,13 +89,20 @@ func addBuildahTaskToPod(ctx context.Context, c client.Client, build *api.Build,
 		".",
 	}...)
 
+	registryAddress, err := registry.RetrieveAddress(task.Registry, ctx, c)
+
+	if err != nil {
+		return errors.New("Unable to find docker registry address!")
+	}
+
 	push := []string{
 		"buildah",
 		"push",
-		"--storage-driver=vfs",
+		"--storage-driver vfs",
 		"--digestfile=/dev/termination-log",
+		"--tls-verify=false",
 		task.Image,
-		"docker://" + task.Image,
+		registryAddress + "/" + task.Image,
 	}
 
 	if task.Verbose != nil && *task.Verbose {
@@ -276,7 +287,14 @@ func addContainerToPod(build *api.Build, container corev1.Container, pod *corev1
 			MountPath: filepath.Join(builderDir, build.Name),
 		})
 	}
-
+	b := true
+	container.SecurityContext = &corev1.SecurityContext{
+		Capabilities: &corev1.Capabilities{
+			Add: []corev1.Capability{corev1.Capability("SYS_ADMIN")},
+		},
+		Privileged: &b,
+	}
+	container.SecurityContext.Privileged = &b
 	pod.Spec.InitContainers = append(pod.Spec.InitContainers, container)
 }
 

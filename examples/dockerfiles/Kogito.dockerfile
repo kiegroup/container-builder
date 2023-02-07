@@ -9,6 +9,8 @@ ARG SCRIPT_DEBUG="false"
  # Copy from build context to skeleton resources project
 COPY * ./resources/
 
+RUN cat $REGISTRY_AUTH_FILE
+
 RUN /home/kogito/launch/build-app.sh ./resources
 #=============================
 # Runtime Run

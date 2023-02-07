@@ -19,7 +19,7 @@ var _ schedulerHandler = &buildahSchedulerHandler{}
 
 func (k buildahSchedulerHandler) CreateScheduler(info BuilderInfo, buildCtx buildContext) Scheduler {
 	buildahTask := api.BuildahTask{
-		BaseTask: api.BaseTask{Name: "buildah-task"},
+		BaseTask: api.BaseTask{Name: info.BuildUniqueName},
 		PublishTask: api.PublishTask{
 			BaseImage: info.Platform.Spec.BaseImage,
 			Image:     info.FinalImageName,

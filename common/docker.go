@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/kiegroup/container-builder/util/log"
+	"io"
 	"io/ioutil"
 	"time"
 
@@ -177,10 +179,17 @@ func (d Docker) PushImage(image string, url string, username string, password st
 }
 
 func (d Docker) PullImage(image string) error {
-	_, err := d.Connection.ImagePull(context.Background(), image, types.ImagePullOptions{})
+	out, err := d.Connection.ImagePull(context.Background(), image, types.ImagePullOptions{})
 	if err != nil {
 		logrus.Errorf("%s %s\n", err, "Error during pull image")
 	}
+	defer out.Close()
+
+	bytes, err := io.ReadAll(out)
+	if err != nil {
+		logrus.Errorf("%s %s\n", err, "Error reading output from pull image command")
+	}
+	log.Debug(string(bytes))
 	return err
 }
 

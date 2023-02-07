@@ -18,19 +18,21 @@ package main
 
 import (
 	"fmt"
-	builder "github.com/kiegroup/container-builder/builder/kubernetes"
 	"os"
 	"time"
 
-	"github.com/kiegroup/container-builder/api"
-	"github.com/kiegroup/container-builder/client"
+	builder "github.com/kiegroup/container-builder/builder/kubernetes"
+
 	v1 "k8s.io/api/core/v1"
 	resource2 "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiegroup/container-builder/api"
+	"github.com/kiegroup/container-builder/client"
 )
 
 /*
-Usage example. Please note that you must have a valid Kubernetes environment up and running.
+Usage example. Please note that you must have a valid Kubernetes environment up and running with the kogito-builder namespace
 */
 
 func main() {
@@ -49,14 +51,93 @@ func main() {
 		fmt.Println("Failed to create client")
 		fmt.Println(err.Error())
 	}
-	platform := api.PlatformBuild{
+
+	argsWithoutProg := os.Args[1:]
+	builderSelection := 1
+
+	var registryAddress, registrySecret string
+	if len(argsWithoutProg) > 0 {
+		if argsWithoutProg[0] == "buildah" {
+			builderSelection = 2
+		}
+		if len(argsWithoutProg) > 2 {
+			registryAddress = argsWithoutProg[1]
+			registrySecret = argsWithoutProg[2]
+			fmt.Printf("Configured registry %s and secret %s.\n", registryAddress, registrySecret)
+		}
+	}
+
+	var build *api.Build
+	switch builderSelection {
+
+	case 1:
+		fmt.Println("Generating Kaniko build")
+		build = generateKanikoBuild(err, dockerFile, source, cli)
+		break
+	case 2:
+		fmt.Println("Generating Buildah build")
+		build = generateBuildahBuild(err, dockerFile, source, cli, registryAddress, registrySecret)
+		break
+
+	}
+
+	// from now the Reconcile method can be called until the build is finished
+	for build.Status.Phase != api.BuildPhaseSucceeded &&
+		build.Status.Phase != api.BuildPhaseError &&
+		build.Status.Phase != api.BuildPhaseFailed {
+		fmt.Printf("\nBuild status is %s", build.Status.Phase)
+		build, err = builder.FromBuild(build).WithClient(cli).Reconcile()
+		if err != nil {
+			fmt.Println("Failed to run test")
+			panic(fmt.Errorf("Build %v just failed", build))
+		}
+		time.Sleep(10 * time.Second)
+	}
+
+}
+
+func generateBuildahBuild(err error, dockerFile []byte, source []byte, cli client.Client, address string, secret string) *api.Build {
+	buildahPlatform := api.PlatformBuild{
 		ObjectReference: api.ObjectReference{
 			Namespace: "kogito-builder",
-			Name:      "testPlatform",
+			Name:      "testBuildahPlatform",
 		},
 		Spec: api.PlatformBuildSpec{
 			BuildStrategy:   api.BuildStrategyPod,
-			PublishStrategy: api.PlatformBuildPublishStrategyKaniko,
+			PublishStrategy: api.PlatformBuildPublishStrategyBuildah,
+			Registry: api.RegistrySpec{
+				Insecure: true,
+			},
+			Timeout: &metav1.Duration{
+				Duration: 5 * time.Minute,
+			},
+		},
+	}
+	if address != "" && secret != "" {
+		buildahPlatform.Spec.Registry.Address = address
+		buildahPlatform.Spec.Registry.Secret = secret
+	}
+
+	buildahBuild, err := builder.NewBuild(builder.BuilderInfo{FinalImageName: "greetings:latest", BuildUniqueName: "kogito-buildah-test", Platform: buildahPlatform}).
+		WithResource("Dockerfile", dockerFile).WithResource("greetings.sw.json", source).
+		WithClient(cli).
+		Schedule()
+	if err != nil {
+		fmt.Println(err.Error())
+		panic("Can't create kanikoBuild")
+	}
+	return buildahBuild
+}
+
+func generateKanikoBuild(err error, dockerFile []byte, source []byte, cli client.Client) *api.Build {
+	kanikoPlatform := api.PlatformBuild{
+		ObjectReference: api.ObjectReference{
+			Namespace: "kogito-builder",
+			Name:      "testBuildahPlatform",
+		},
+		Spec: api.PlatformBuildSpec{
+			BuildStrategy:   api.BuildStrategyPod,
+			PublishStrategy: api.PlatformBuildPublishStrategyBuildah,
 			Registry: api.RegistrySpec{
 				Insecure: true,
 			},
@@ -69,7 +150,7 @@ func main() {
 	cpuQty, _ := resource2.ParseQuantity("1")
 	memQty, _ := resource2.ParseQuantity("4Gi")
 
-	build, err := builder.NewBuild(builder.BuilderInfo{FinalImageName: "greetings:latest", BuildUniqueName: "kogito-test", Platform: platform}).
+	kanikoBuild, err := builder.NewBuild(builder.BuilderInfo{FinalImageName: "greetings:latest", BuildUniqueName: "kogito-test", Platform: kanikoPlatform}).
 		WithResource("Dockerfile", dockerFile).WithResource("greetings.sw.json", source).
 		WithAdditionalArgs([]string{"--build-arg=QUARKUS_PACKAGE_TYPE=mutable-jar", "--build-arg=QUARKUS_LAUNCH_DEVMODE=true", "--build-arg=SCRIPT_DEBUG=false"}).
 		WithResourceRequirements(v1.ResourceRequirements{
@@ -86,20 +167,7 @@ func main() {
 		Schedule()
 	if err != nil {
 		fmt.Println(err.Error())
-		panic("Can't create build")
+		panic("Can't create kanikoBuild")
 	}
-
-	// from now the Reconcile method can be called until the build is finished
-	for build.Status.Phase != api.BuildPhaseSucceeded &&
-		build.Status.Phase != api.BuildPhaseError &&
-		build.Status.Phase != api.BuildPhaseFailed {
-		fmt.Printf("\nBuild status is %s", build.Status.Phase)
-		build, err = builder.FromBuild(build).WithClient(cli).Reconcile()
-		if err != nil {
-			fmt.Println("Failed to run test")
-			panic(fmt.Errorf("build %v just failed", build))
-		}
-		time.Sleep(10 * time.Second)
-	}
-
+	return kanikoBuild
 }
