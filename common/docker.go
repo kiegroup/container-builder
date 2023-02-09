@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cleaner
+package common
 
 import (
 	"context"
@@ -28,6 +28,10 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 )
+
+type Docker struct {
+	Connection *client.Client
+}
 
 // https://docs.docker.com/engine/api/latest/
 func (d Docker) GetClient() (*client.Client, error) {

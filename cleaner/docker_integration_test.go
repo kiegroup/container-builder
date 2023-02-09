@@ -19,6 +19,7 @@
 package cleaner
 
 import (
+	"github.com/kiegroup/container-builder/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -31,28 +32,28 @@ func TestDockerIntegrationTestSuite(t *testing.T) {
 }
 
 func (suite *DockerTestSuite) TestImagesOperationsOnDockerRegistryForTest() {
-	registryContainer, err := GetRegistryContainer()
+	registryContainer, err := common.GetRegistryContainer()
 	assert.NotNil(suite.T(), registryContainer)
 	assert.Nil(suite.T(), err)
 	repos, err := registryContainer.GetRepositories()
 	initialSize := len(repos)
 	assert.Nil(suite.T(), err)
 
-	pullErr := suite.Docker.PullImage(TEST_IMG + ":" + LATEST_TAG)
+	pullErr := suite.Docker.PullImage(common.TEST_IMG + ":" + common.LATEST_TAG)
 	if pullErr != nil {
 		logrus.Infof("Pull Error:%s", pullErr)
 	}
 	assert.Nil(suite.T(), pullErr, "Pull image failed")
 	time.Sleep(2 * time.Second) // Needed on CI
-	assert.True(suite.T(), suite.LocalRegistry.IsImagePresent(TEST_IMG), "Test image not found in the registry after the pull")
-	tagErr := suite.Docker.TagImage(TEST_IMG, TEST_IMG_LOCAL_TAG)
+	assert.True(suite.T(), suite.LocalRegistry.IsImagePresent(common.TEST_IMG), "Test image not found in the registry after the pull")
+	tagErr := suite.Docker.TagImage(common.TEST_IMG, common.TEST_IMG_LOCAL_TAG)
 	if tagErr != nil {
 		logrus.Infof("Tag Error:%s", tagErr)
 	}
 
 	assert.Nil(suite.T(), tagErr, "Tag image failed")
 	time.Sleep(2 * time.Second) // Needed on CI
-	pushErr := suite.Docker.PushImage(TEST_IMG_LOCAL_TAG, REGISTRY_CONTAINER_URL_FROM_DOCKER_SOCKET, "", "")
+	pushErr := suite.Docker.PushImage(common.TEST_IMG_LOCAL_TAG, common.REGISTRY_CONTAINER_URL_FROM_DOCKER_SOCKET, "", "")
 	if pushErr != nil {
 		logrus.Infof("Push Error:%s", pushErr)
 	}
@@ -65,8 +66,8 @@ func (suite *DockerTestSuite) TestImagesOperationsOnDockerRegistryForTest() {
 	assert.NotNil(suite.T(), repos)
 	assert.True(suite.T(), len(repos) == initialSize+1)
 
-	digest, erroDIgest := registryContainer.Connection.ManifestDigest(TEST_IMG, LATEST_TAG)
+	digest, erroDIgest := registryContainer.Connection.ManifestDigest(common.TEST_IMG, common.LATEST_TAG)
 	assert.Nil(suite.T(), erroDIgest)
 	assert.NotNil(suite.T(), digest)
-	assert.NotNil(suite.T(), registryContainer.DeleteImage(TEST_IMG, LATEST_TAG), "Delete Image not allowed")
+	assert.NotNil(suite.T(), registryContainer.DeleteImage(common.TEST_IMG, common.LATEST_TAG), "Delete Image not allowed")
 }

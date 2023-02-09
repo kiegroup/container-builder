@@ -18,7 +18,7 @@
 package builder
 
 import (
-	"github.com/kiegroup/container-builder/cleaner"
+	"github.com/kiegroup/container-builder/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -27,13 +27,13 @@ import (
 
 type KanikoDockerTestSuite struct {
 	suite.Suite
-	LocalRegistry cleaner.DockerLocalRegistry
+	LocalRegistry common.DockerLocalRegistry
 	RegistryID    string
-	Docker        cleaner.Docker
+	Docker        common.Docker
 }
 
 func (suite *KanikoDockerTestSuite) SetupSuite() {
-	dockerRegistryContainer, registryID, docker := cleaner.SetupDockerSocket()
+	dockerRegistryContainer, registryID, docker := common.SetupDockerSocket()
 	if len(registryID) > 0 {
 		suite.LocalRegistry = dockerRegistryContainer
 		suite.RegistryID = registryID
@@ -46,17 +46,17 @@ func (suite *KanikoDockerTestSuite) SetupSuite() {
 	if pullErr != nil {
 		logrus.Infof("Pull Kaniko executor Error:%s", pullErr)
 	}
-	time.Sleep(2 * time.Second) // Needed on CI
+	time.Sleep(4 * time.Second) // Needed on CI
 }
 
 func (suite *KanikoDockerTestSuite) TearDownSuite() {
 	registryID := suite.LocalRegistry.GetRegistryRunningID()
 	if len(registryID) > 0 {
-		cleaner.DockerTearDown(suite.LocalRegistry)
+		common.DockerTearDown(suite.LocalRegistry)
 	} else {
 		suite.LocalRegistry.StopRegistry()
 	}
-	purged, err := suite.Docker.PurgeContainer("", cleaner.REGISTRY_IMG)
+	purged, err := suite.Docker.PurgeContainer("", common.REGISTRY_IMG)
 	logrus.Infof("Purged containers %t", purged)
 	if err != nil {
 		logrus.Infof("Purged registry err %t", err)

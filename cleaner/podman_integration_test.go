@@ -18,6 +18,7 @@
 package cleaner
 
 import (
+	"github.com/kiegroup/container-builder/common"
 	"github.com/sirupsen/logrus"
 	"testing"
 	"time"
@@ -31,20 +32,20 @@ func TestPodmanIntegrationTestSuite(t *testing.T) {
 }
 
 func (suite *PodmanTestSuite) TestImagesOperationsOnPodmanRegistryForTest() {
-	registryContainer, err := GetRegistryContainer()
+	registryContainer, err := common.GetRegistryContainer()
 	assert.NotNil(suite.T(), registryContainer)
 	assert.Nil(suite.T(), err)
 	repos, err := registryContainer.GetRepositories()
 	assert.Nil(suite.T(), err)
 	assert.True(suite.T(), len(repos) == 0)
-	_, pullErr := suite.Podman.PullImage(TEST_IMG)
+	_, pullErr := suite.Podman.PullImage(common.TEST_IMG)
 	if pullErr != nil {
 		logrus.Infof("Pull Error:%s", pullErr)
 	}
 	assert.Nil(suite.T(), pullErr, "Pull image failed")
 	time.Sleep(2 * time.Second) // Needed on CI
 
-	tagErr := suite.Podman.TagImage(TEST_IMG, LATEST_TAG, TEST_REGISTRY_REPO+TEST_IMG)
+	tagErr := suite.Podman.TagImage(common.TEST_IMG, common.LATEST_TAG, common.TEST_REGISTRY_REPO+common.TEST_IMG)
 	if tagErr != nil {
 		logrus.Infof("Tag Error:%s", tagErr)
 	}
@@ -52,7 +53,7 @@ func (suite *PodmanTestSuite) TestImagesOperationsOnPodmanRegistryForTest() {
 	assert.Nil(suite.T(), tagErr, "Tag image failed")
 	time.Sleep(2 * time.Second) // Needed on CI
 
-	pushErr := suite.Podman.PushImage(TEST_IMG_LOCAL_TAG, TEST_IMG_LOCAL_TAG, "", "")
+	pushErr := suite.Podman.PushImage(common.TEST_IMG_LOCAL_TAG, common.TEST_IMG_LOCAL_TAG, "", "")
 
 	if pushErr != nil {
 		logrus.Infof("Push Error:%s", pushErr)
@@ -64,8 +65,8 @@ func (suite *PodmanTestSuite) TestImagesOperationsOnPodmanRegistryForTest() {
 	assert.Nil(suite.T(), err)
 	assert.True(suite.T(), len(repos) == 1)
 
-	digest, erroDIgest := registryContainer.Connection.ManifestDigest(TEST_IMG, LATEST_TAG)
+	digest, erroDIgest := registryContainer.Connection.ManifestDigest(common.TEST_IMG, common.LATEST_TAG)
 	assert.Nil(suite.T(), erroDIgest)
 	assert.NotNil(suite.T(), digest)
-	assert.NotNil(suite.T(), registryContainer.DeleteImage(TEST_IMG, LATEST_TAG), "Delete Image not allowed")
+	assert.NotNil(suite.T(), registryContainer.DeleteImage(common.TEST_IMG, common.LATEST_TAG), "Delete Image not allowed")
 }

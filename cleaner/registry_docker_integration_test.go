@@ -19,6 +19,7 @@
 package cleaner
 
 import (
+	"github.com/kiegroup/container-builder/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -40,7 +41,7 @@ func (suite *DockerTestSuite) TestDockerRegistry() {
 
 func (suite *DockerTestSuite) TestPullTagPush() {
 	assert.Truef(suite.T(), suite.RegistryID != "", "Registry not started")
-	registryContainer, err := GetRegistryContainer()
+	registryContainer, err := common.GetRegistryContainer()
 	assert.Nil(suite.T(), err)
 	reposInitial, _ := registryContainer.GetRepositories()
 	initialRepoSize := len(reposInitial)
@@ -56,22 +57,22 @@ func (suite *DockerTestSuite) TestPullTagPush() {
 
 func dockerPullTagPushOnRegistryContainer(suite *DockerTestSuite) bool {
 	dockerSocketConn := suite.Docker.Connection
-	d := Docker{Connection: dockerSocketConn}
+	d := common.Docker{Connection: dockerSocketConn}
 
-	err := d.PullImage(TEST_IMG_SECOND)
+	err := d.PullImage(common.TEST_IMG_SECOND)
 	time.Sleep(2 * time.Second) // needed on CI
 	if err != nil {
 		assert.Fail(suite.T(), "Pull Image Failed", err)
 		return false
 	}
 
-	err = d.TagImage(TEST_IMG_SECOND_TAG, TEST_IMG_SECOND_LOCAL_TAG)
+	err = d.TagImage(common.TEST_IMG_SECOND_TAG, common.TEST_IMG_SECOND_LOCAL_TAG)
 	if err != nil {
 		assert.Fail(suite.T(), "Tag Image Failed", err)
 		return false
 	}
 
-	err = d.PushImage(TEST_IMG_SECOND_LOCAL_TAG, REGISTRY_CONTAINER_URL_FROM_DOCKER_SOCKET, "", "")
+	err = d.PushImage(common.TEST_IMG_SECOND_LOCAL_TAG, common.REGISTRY_CONTAINER_URL_FROM_DOCKER_SOCKET, "", "")
 	if err != nil {
 		assert.Fail(suite.T(), "Push Image Failed", err)
 		return false

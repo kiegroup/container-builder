@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package cleaner
+package common
 
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/docker/docker/client"
 	registryContainer "github.com/heroku/docker-registry-client/registry"
@@ -114,4 +117,47 @@ func (r *RegistryContainer) url(pathTemplate string, args ...interface{}) string
 	pathSuffix := fmt.Sprintf(pathTemplate, args...)
 	url := fmt.Sprintf("%s%s", r.Connection.URL, pathSuffix)
 	return url
+}
+
+func GetRegistryContainer() (RegistryContainer, error) {
+	registryContainerConnection, err := GetRegistryConnection(REGISTRY_CONTAINER_URL, "", "")
+	if err != nil {
+		logrus.Errorf("Can't connect to the RegistryContainer")
+		return RegistryContainer{}, err
+	}
+	return RegistryContainer{Connection: *registryContainerConnection}, nil
+}
+
+func IsPortAvailable(port string) bool {
+	ln, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Can't listen on port %q: %s", port, err)
+		return false
+	}
+	ln.Close()
+	return true
+}
+
+func GetRegistryConnection(url string, username string, password string) (*registryContainer.Registry, error) {
+	registryConn, err := registryContainer.New(url, username, password)
+	if err != nil {
+		logrus.Error(err, "First Attempt to connect with RegistryContainer")
+	}
+	// we try ten times if the machine is slow and the registry needs time to start
+	if err != nil {
+		logrus.Info("Waiting for a correct ping with RegistryContainer")
+
+		for i := 0; i < 10; i++ {
+			time.Sleep(1 * time.Second)
+			if registryConn == nil {
+				registryConn, _ = registryContainer.New(url, username, password)
+			}
+			if registryConn != nil {
+				if err := registryConn.Ping(); err != nil {
+					continue
+				}
+			}
+		}
+	}
+	return registryConn, err
 }

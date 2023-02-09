@@ -18,19 +18,20 @@
 package cleaner
 
 import (
+	"github.com/kiegroup/container-builder/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 type PodmanTestSuite struct {
 	suite.Suite
-	LocalRegistry PodmanLocalRegistry
+	LocalRegistry common.PodmanLocalRegistry
 	RegistryID    string
-	Podman        Podman
+	Podman        common.Podman
 }
 
 func (suite *PodmanTestSuite) SetupSuite() {
-	localRegistry, registryID, podman := SetupPodmanSocket()
+	localRegistry, registryID, podman := common.SetupPodmanSocket()
 	if len(registryID) > 0 {
 		suite.LocalRegistry = localRegistry
 		suite.RegistryID = registryID
@@ -43,9 +44,9 @@ func (suite *PodmanTestSuite) SetupSuite() {
 func (suite *PodmanTestSuite) TearDownSuite() {
 	registryID := suite.LocalRegistry.GetRegistryRunningID()
 	if len(registryID) > 0 {
-		PodmanTearDown(suite.LocalRegistry)
+		common.PodmanTearDown(suite.LocalRegistry)
 	} else {
 		suite.LocalRegistry.StopRegistry()
 	}
-	suite.Podman.PurgeContainer("", REGISTRY_IMG_FULL)
+	suite.Podman.PurgeContainer("", common.REGISTRY_IMG_FULL)
 }

@@ -19,6 +19,7 @@
 package cleaner
 
 import (
+	"github.com/kiegroup/container-builder/common"
 	"testing"
 	"time"
 
@@ -40,7 +41,7 @@ func (suite *PodmanTestSuite) TestRegistry() {
 func (suite *PodmanTestSuite) TestPullTagPush() {
 
 	assert.Truef(suite.T(), suite.RegistryID != "", "Registry not started")
-	registryContainer, err := GetRegistryContainer()
+	registryContainer, err := common.GetRegistryContainer()
 	assert.Nil(suite.T(), err)
 	reposInitial, _ := registryContainer.GetRepositories()
 	initialRepoSize := len(reposInitial)
@@ -57,12 +58,12 @@ func (suite *PodmanTestSuite) TestPullTagPush() {
 }
 
 func podmanPullTagPushOnRegistryContainer(suite *PodmanTestSuite) bool {
-	podmanSocketConn, errSock := GetPodmanConnection()
+	podmanSocketConn, errSock := common.GetRootlessPodmanConnection()
 	if errSock != nil {
 		assert.FailNow(suite.T(), "Cant get podman socket")
 	}
-	p := Podman{Connection: podmanSocketConn}
-	_, err := p.PullImage(TEST_IMG_SECOND)
+	p := common.Podman{Connection: podmanSocketConn}
+	_, err := p.PullImage(common.TEST_IMG_SECOND)
 	time.Sleep(2 * time.Second) // needed on CI
 	if err != nil {
 		assert.Fail(suite.T(), "Pull Image Failed", err)
@@ -71,14 +72,14 @@ func podmanPullTagPushOnRegistryContainer(suite *PodmanTestSuite) bool {
 
 	logrus.Info("Pull image")
 
-	err = p.TagImage(TEST_REPO+TEST_IMG_SECOND_TAG, LATEST_TAG, TEST_REGISTRY_REPO+TEST_IMG_SECOND)
+	err = p.TagImage(common.TEST_REPO+common.TEST_IMG_SECOND_TAG, common.LATEST_TAG, common.TEST_REGISTRY_REPO+common.TEST_IMG_SECOND)
 	if err != nil {
 		assert.Fail(suite.T(), "Tag Image Failed", err)
 		return false
 	}
 	logrus.Info("Tag image")
 
-	err = p.PushImage(TEST_IMG_SECOND_LOCAL_TAG, TEST_IMG_SECOND_LOCAL_TAG, "", "")
+	err = p.PushImage(common.TEST_IMG_SECOND_LOCAL_TAG, common.TEST_IMG_SECOND_LOCAL_TAG, "", "")
 	if err != nil {
 		assert.Fail(suite.T(), "Push Image Failed", err)
 		return false

@@ -18,6 +18,7 @@
 package builder
 
 import (
+	"github.com/kiegroup/container-builder/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -31,7 +32,8 @@ func TestKanikoTestSuite(t *testing.T) {
 }
 
 func (suite *KanikoDockerTestSuite) TestKanikoBuild() {
-
+	imageName := "localhost:5000/kaniko-test/kaniko-dockerfile_test_swf"
+	registry, err, repos := checkEmptyDockerRegistry(suite)
 	mydir, err := os.Getwd()
 	if err != nil {
 		logrus.Error(err)
@@ -44,7 +46,7 @@ func (suite *KanikoDockerTestSuite) TestKanikoBuild() {
 		KanikoExecutorImage:    EXECUTOR_IMAGE,
 		ContainerName:          "kaniko-build",
 		DockerFileName:         "Kogito.dockerfile",
-		RegistryFinalImageName: "localhost:5000/kaniko-test/kaniko-dockerfile_test_swf",
+		RegistryFinalImageName: imageName,
 		ReadBuildOutput:        false,
 	}
 	logrus.Infof("Start Kaniko build")
@@ -54,4 +56,24 @@ func (suite *KanikoDockerTestSuite) TestKanikoBuild() {
 	logrus.Infof("The Kaniko build took %s", timeElapsed)
 	assert.Nil(suite.T(), error, "Build failed")
 	assert.NotNil(suite.T(), imageID, error, "Build failed")
+	checkImageOnDockerRegistry(suite, imageName, repos, registry)
+}
+
+func checkImageOnDockerRegistry(suite *KanikoDockerTestSuite, imageName string, repos []string, registry common.RegistryContainer) {
+	pushErr := suite.Docker.PushImage(imageName, imageName, "", "")
+	assert.Nil(suite.T(), pushErr)
+	repos, _ = registry.GetRepositories()
+	assert.True(suite.T(), len(repos) == 1)
+}
+
+func checkEmptyDockerRegistry(suite *KanikoDockerTestSuite) (common.RegistryContainer, error, []string) {
+	assert.Truef(suite.T(), suite.RegistryID != "", "Registry not started")
+	registry, err := common.GetRegistryContainer()
+	if err != nil {
+		logrus.Error("registry not found")
+	}
+	repos, _ := registry.GetRepositories()
+	assert.True(suite.T(), len(repos) == 0)
+	assert.Nil(suite.T(), err)
+	return registry, err, repos
 }
