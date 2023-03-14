@@ -18,6 +18,7 @@ package kubernetes
 
 import (
 	"context"
+	"github.com/kiegroup/container-builder/util"
 	"strings"
 
 	"github.com/kiegroup/container-builder/api"
@@ -123,6 +124,17 @@ func addKanikoTaskToPod(ctx context.Context, c client.Client, build *api.Build, 
 		WorkingDir:      task.ContextDir,
 		VolumeMounts:    volumeMounts,
 		Resources:       task.Resources,
+		SecurityContext: &corev1.SecurityContext{
+			AllowPrivilegeEscalation: util.Pbool(false),
+			Privileged:               util.Pbool(false),
+			RunAsNonRoot:             util.Pbool(true),
+			SeccompProfile: &corev1.SeccompProfile{
+				Type: corev1.SeccompProfileTypeRuntimeDefault,
+			},
+			Capabilities: &corev1.Capabilities{
+				Drop: []corev1.Capability{corev1.Capability("ALL")},
+			},
+		},
 	}
 
 	// We may want to handle possible conflicts
