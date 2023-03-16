@@ -14,6 +14,8 @@ import (
 	"github.com/kiegroup/container-builder/api"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	kubeutils "github.com/kiegroup/container-builder/util/kubernetes"
 )
 
 type registrySecret struct {
@@ -38,7 +40,8 @@ func newBuildPod(ctx context.Context, c client.Client, build *api.Build) (*corev
 			},
 		},
 		Spec: corev1.PodSpec{
-			RestartPolicy: corev1.RestartPolicyNever,
+			RestartPolicy:   corev1.RestartPolicyNever,
+			SecurityContext: kubeutils.PodSecurityDefaults(),
 		},
 	}
 
