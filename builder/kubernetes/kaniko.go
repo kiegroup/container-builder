@@ -127,7 +127,7 @@ func addKanikoTaskToPod(ctx context.Context, c client.Client, build *api.Build, 
 		SecurityContext: &corev1.SecurityContext{
 			AllowPrivilegeEscalation: util.Pbool(false),
 			Privileged:               util.Pbool(false),
-			RunAsNonRoot:             util.Pbool(true),
+			RunAsNonRoot:             util.Pbool(false),
 			SeccompProfile: &corev1.SeccompProfile{
 				Type: corev1.SeccompProfileTypeRuntimeDefault,
 			},
