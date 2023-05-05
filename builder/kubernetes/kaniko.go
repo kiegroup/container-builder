@@ -123,7 +123,7 @@ func addKanikoTaskToPod(ctx context.Context, c client.Client, build *api.Build, 
 		WorkingDir:      task.ContextDir,
 		VolumeMounts:    volumeMounts,
 		Resources:       task.Resources,
-		SecurityContext: KanikoSecurityDefaults(),
+		//SecurityContext: KanikoSecurityDefaults(),
 	}
 
 	// We may want to handle possible conflicts
